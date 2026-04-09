@@ -1,0 +1,242 @@
+# EME-L (EME Language) — язык программирования для EME.WMS
+
+> Проприетарный язык для разработки бизнес-логики в складской системе EME.WMS. Синтаксис в стиле Pascal с блочными конструкциями. Код хранится в EME-L классах и выполняется интерпретатором, встроенным в ядро системы.
+
+## Правила (обязательно для AI)
+
+- Использовать `SetChainMode` вместо `SetSkipMode` для перебора строк документа
+- Использовать `Const` для константных объектов в циклах
+- Транзакция: `is_transaction(1)` перед изменением данных, `is_transaction(-1)` после
+- `ByRef`/`ByVal` для возврата нескольких значений из функции
+- `SetSkipMode` нельзя использовать внутри цикла — режим устанавливается один раз перед циклом
+- В EME-SQL использовать `WITH` вместо `WHERE` для загрузки данных
+- Только подтверждённые примеры из документации — не выдумывать код
+- Перед каждым методом: `' #KPI Инициалы Дата` и описание задачи
+- Исправления: `' #NPM Дата По заявке №: причина` над блоком кода
+- `As "Invariant"` предпочтительнее `As "Dynamic"` для IClass
+
+---
+
+## Обзор файловой структуры
+
+| Файл | Содержание |
+|------|-----------|
+| [EMEL_Language_Basics.md](docs/EMEL_Language_Basics.md) | Синтаксис, переменные, транзакции, режимы обхода, статическая линковка, ByRef, оптимизация памяти, правила оформления кода |
+| [EMEL_Working_with_Records.md](docs/EMEL_Working_with_Records.md) | Создание/удаление строк, Put/Get, реляционный путь, MustBe*, BitBuffer, SetFindMode, удалённые строки |
+| [EMEL_SQL_Queries.md](docs/EMEL_SQL_Queries.md) | EME-SQL, WITH, Const, is_query/is_edit_data, ExternalDB, PostgreSQL, dsQUERY |
+| [EMEL_Dialogs_Reports.md](docs/EMEL_Dialogs_Reports.md) | Dialog_OnLoad/OnCheck, OnCheck для органов, UI дизайн, отчёты, ReportRunner, будильник, 3D (Irrlicht) |
+| [EMEL_Classes_Utility.md](docs/EMEL_Classes_Utility.md) | Query, Map, Array, BitBuffer, String, PropertyTree, MultiArray, dsQUERY, блочная запись |
+| [EMEL_EventHandlers.md](docs/EMEL_EventHandlers.md) | Все обработчики событий (OnLoad, OnCheck, OnSkip, OnMoveTableLines и др.) |
+| [EMEL_Constants_isFunctions.md](docs/EMEL_Constants_isFunctions.md) | Константы, is-функции (Bit, Browser, Context), DBWatch, заливка проекта, мультипротоколы |
+| [EMEL_Practice_Tasks.md](docs/EMEL_Practice_Tasks.md) | Практические задачи: оптимизация, отладка, разбор кода |
+| [EME_WMS_Architecture.md](docs/EME_WMS_Architecture.md) | Архитектура WMS: сервер, рабстанция, ТСД, мозговой компьютер, Монитор Заданий |
+| [EME_WMS_Administration.md](docs/EME_WMS_Administration.md) | Администрирование: настройка, экспорт, заливка, тестирование |
+| [EME_WMS_Priorities_Algorithms.md](docs/EME_WMS_Priorities_Algorithms.md) | Приоритеты и алгоритмы WMS: подборка, размещение, пополнение |
+
+---
+
+## Создание объектов Object()
+
+| Класс | Назначение |
+|-------|-----------|
+| `Object("dsDB", "Запись")` | Запись базы данных |
+| `Object("Dialog")` | Диалог |
+| `Object("Control",,"Имя")` | Орган управления диалога |
+| `Object("Query")` | Табличные данные в памяти |
+| `Object("Map", размер)` | Хэш-таблица (размер ≈ 1.3× кол-ва элементов) |
+| `Object("Array")` | Динамический массив |
+| `Object("BitBuffer", размер)` | Битовый буфер для фильтрации |
+| `Object("String", "значение")` | Работа со строками |
+| `Object("PropertyTree")` | JSON-дерево |
+| `Object("dsQUERY")` | Запрос в памяти для блочной записи |
+| `Object("DBWatch")` | Дозор базы данных |
+
+---
+
+## Режимы обхода записей
+
+| Режим | Скорость | В цикле | Применение |
+|-------|----------|---------|-------------|
+| SetRealMode | Медленно | Да | Полный перебор без условий |
+| SetSkipMode | Средне | Нет | Поиск с условиями MustBe* |
+| SetSkipMode("Индекс") | Быстро | Да | Поиск по индексированному полю |
+| SetChainMode | Очень быстро | Да | Перебор строк одного документа |
+| SetFindMode | Быстро | Нет | Поиск ≥10 значений без индекса |
+
+---
+
+## Ключевые методы dsDB
+
+| Метод | Описание |
+|-------|----------|
+| `CreateNewLine()` / `ApplyNewLine()` | Создание и сохранение новой строки |
+| `DeleteLine()` | Удаление строки |
+| `SetLine(ref)` | Установка на строку по ссылке |
+| `SetFirstLine()` / `SetNextLine()` / `IsValidLine()` | Навигация по строкам |
+| `GetLine()` | Получить ссылку на текущую строку |
+| `PutXxxFld(value)` / `GetXxxFld()` | Запись/чтение типизированных полей |
+| `MustBeEQ()` / `MustBeRefEQ()` / `MustBeValid()` | Условия фильтрации (SetSkipMode) |
+| `MustBeIndexEQ(val1, val2, ...)` | Фильтрация по составному индексу |
+| `MustBeRefInBitBuffer(bb)` | Фильтрация по битовому буферу |
+| `GetРеляционныйПуть()` | Чтение связанных данных (GetGates().GetCode()) |
+| `SetQuery(query)` | Перенаправление dsDB на запрос в памяти |
+
+---
+
+## Контроль транзакций
+
+```eme-l
+is_transaction(1, "Имя операции");
+' ... создание/изменение строк ...
+is_transaction(-1);
+```
+
+---
+
+## Класс Query
+
+| Метод | Описание |
+|-------|----------|
+| `Create()` | Создать запрос |
+| `AddColumn(Имя, Тип)` / `AddREF(Имя, Запись)` | Добавить столбец |
+| `AddLine()` | Добавить строку |
+| `SetData(Кол, Стр, Знач)` / `GetData(Кол, Стр)` | Запись/чтение данных |
+| `Find(Кол, Знач)` | Поиск значения в столбце |
+| `Sort(Кол, Убыв)` | Сортировка по столбцу |
+| `GetNoOfLines()` | Количество строк |
+
+---
+
+## Класс Map
+
+Рекомендуемый размер: 1.3 × ожидаемое количество элементов. Не создавать объекты в параметре `Lookup()` — это вызывает утечку памяти.
+
+| Метод | Описание |
+|-------|----------|
+| `Put(Key, Value)` / `Get(Key)` | Запись/чтение по ключу |
+| `SetAt(Key, Value)` | Обновить или добавить |
+| `Lookup(Key)` | Найти по ключу (возвращает объект или INVALID) |
+| `SetFirstLine()` / `IsValidLine()` / `SetNextLine()` | Итерация |
+| `GetKey()` / `GetValue()` | Получить текущие ключ/значение |
+
+---
+
+## Класс PropertyTree (JSON)
+
+| Метод | Описание |
+|-------|----------|
+| `Put(Name, Value)` | Добавить простое поле |
+| `AddChild(Name)` | Создать дочерний узел, возвращает ссылку |
+| `PushBack()` | Добавить пустой узел в массив |
+| `Get(Name)` | Получить значение поля |
+| `GetJSON()` | Получить JSON-строку (по умолчанию UTF-8) |
+| `PutJSON(string)` | Парсинг JSON-строки |
+
+---
+
+## is-функции
+
+### Основные
+
+| Функция | Описание |
+|---------|----------|
+| `is_date(д, м, г)` | Создание даты |
+| `is_time(ч, м, с)` | Создание времени |
+| `is_transaction(1,"Имя")` / `(-1)` | Транзакция |
+| `is_message(заголовок, текст, кнопки, иконка)` | Сообщение |
+| `is_format(формат, ...)` | Форматирование строки |
+| `is_trim_all(строка)` | Удаление пробелов |
+| `is_query(запрос, поле)` | Значение из запроса |
+| `is_edit_data("Орган")` | Значение из органа диалога |
+| `is_line()` | Номер текущей строки |
+| `is_workstation_mode()` | Режим станции |
+| `is_report_param()` | Параметр отчёта (для будильника) |
+| `is_dlg_line()` | Ссылка на текущую строку диалога |
+| `is_No_of_lines("Запись")` | Количество строк в записи |
+| `is_type(значение, тип)` | Преобразование типа |
+
+### Группа Bit
+
+| Функция | Описание |
+|---------|----------|
+| `is_bit(Field, BitNo)` | Проверка бита |
+| `is_set_bit` / `is_clear_bit` / `is_reverse_bit` | Установка/снятие/инверсия бита |
+| `is_and` / `is_or` / `is_xor` / `is_not` | Побитовые операции |
+| `is_mask(...)` | Формирование маски |
+| `is_shift_left` / `is_shift_right` | Сдвиги |
+
+### Группа Browser
+
+| Функция | Описание |
+|---------|----------|
+| `is_hewed(Var, Line, Obj)` | Проверка выделения строки в браузере |
+| `is_browse(Browser, ...)` | Номер выбранной строки |
+| `is_browse_data(Column, Line)` | Содержимое колонки |
+| `is_keydown_flag()` | Нажатие клавиши |
+
+### Группа Context
+
+| Функция | Описание |
+|---------|----------|
+| `is_put_context(Name, Param)` | Установить контекст |
+| `is_get_context_as_string(Name)` | Получить как строку |
+| `is_get_context_as_ref(Name)` | Получить как число |
+| `is_check_context(Type, Name)` | Проверить контекст |
+
+---
+
+## Статическая линковка и Dynamic/Invariant
+
+Статическая линковка: `r_Doc As "Document" = Const(Object("dsDB", "Document"))` — компилятор проверяет методы.
+
+Для IClass: `As "Dynamic"` (поиск при каждом вызове, медленнее) или `As "Invariant"` (поиск при первом вызове, предпочтительно). `FindMethod`/`CallMethod` запрещены.
+
+---
+
+## Константы
+
+Типы документов: `DOCUMENT_TYPE_INCOMG`=0 (Приход), `DOCUMENT_TYPE_MOVPAL`=1, `DOCUMENT_TYPE_OFFWRI`=4 (Списание), `DOCUMENT_TYPE_OUTPPU`=5 (Отгрузка).
+
+Статусы заказов: `osNew`=0, `osCalculated`=200, `osAssembled`=500, `osHasLeftWarehouse`=600, `osFinished`=1400.
+
+Типы приказов: `MO_TYPE_INCOMING`=0, `MO_TYPE_PPU`=4, `MO_TYPE_DOCUMENT_INVENTORY`=7.
+
+Зоны склада: `ZONE_STORAGE`=0, `ZONE_ACCEPTION`=1, `ZONE_PIKING`=2, `ZONE_COMPLETE`=3, `ZONE_SHIPPING`=5.
+
+---
+
+## Отчёты по будильнику
+
+Запрещены: `is_edit_data()`, `is_hewed()`, `Object("Dialog")`, `Object("Control")`. Параметры через ReportRunner: `Object().GetDateBegin()`, `Object().GetParameters()`. Вместо `is_edit_data()` — `is_report_param()`. Видимость: `TRUE` с диалога, `FALSE` по будильнику.
+
+---
+
+## dsQUERY и блочная запись
+
+Используется для подготовки данных вне транзакции (OnPrepare) и быстрой записи (OnImport). Порядок: Create → AddField → SetQuery → AppendAndSetLine → ConnectFields → Sort → Loop(PutConnectData) → DisconnectFields.
+
+Ограничения: поля переменной длины и признаки не поддерживаются блочной записью. `DisconnectFields()` обязателен.
+
+---
+
+## DBWatch — дозор базы данных
+
+Позволяет отслеживать изменения между подготовкой и транзакцией. Порядок: `is_db_watch(1)` → OnPrepare → `is_transaction(1)` → `is_db_watch(-1)` → проверка `m_DBWatch.Check()` → `is_transaction(-1)`.
+
+---
+
+## Правила оформления диалогов
+
+Шрифт Arial 10, кнопки Arial 11. Отступ от края 14px, между полями 8px. Высота текстового поля 22px. Простые диалоги ≤524px, сложные ≤750px. Без скроллингов. Зелёная «Применить» RGB(0,164,65), белая «Закрыть». Обязательные поля — с текстом «Введи!».
+
+---
+
+## Правила комментирования кода EME-L
+
+1. Перед каждым методом: `' #KPI Инициалы Дата` и описание задачи
+2. Исправления: `' #NPM Дата По заявке№: причина` над блоком кода
+3. Скопипастенный код: актуализировать комментарии, удалять старые даты/фамилии
+4. Каждый блок кода — с комментарием для чего он нужен
+5. Чтение из БД и запись в БД — в разных блоках/циклах
+6. Код с учётом больших данных, в комментариях — почему выбран способ
+7. Встроенная самодиагностика: проверка промежуточных результатов

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OpenCode
+.opencode/
+opencode.json
+
+# Source files - not for Context7
+EMEL_Programming_Language/
+
+# Images
+*.png
+*.jpg
+*.gif

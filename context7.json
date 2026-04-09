@@ -1,0 +1,20 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "EME-L Programming Language",
+  "description": "Проприетарный язык программирования для системы управления складом EME.WMS. Используется для разработки бизнес-логики, диалогов, отчётов и интеграций.",
+  "url": "https://context7.com/eme-wms/eme-l",
+  "public_key": "pk_ez1lBEo3QvfnWQA9988u7",
+  "folders": ["docs"],
+  "excludeFolders": [],
+  "excludeFiles": ["CHANGELOG.md", "LICENSE.md", "CODE_OF_CONDUCT.md"],
+  "rules": [
+    "Использовать SetChainMode вместо SetSkipMode для перебора строк документа",
+    "Использовать Const для константных объектов в циклах",
+    "Всегда начинать транзакцию с is_transaction(1) перед изменением данных",
+    "Закрывать транзакцию is_transaction(-1) после завершения",
+    "Использовать ByRef/ByVal для возврата нескольких значений из функции",
+    "SetSkipMode нельзя использовать внутри цикла — режим устанавливается один раз перед циклом",
+    "В EME-SQL использовать WITH вместо WHERE для загрузки данных",
+    "Только реферальные примеры из документации — не выдумывать код"
+  ]
+}

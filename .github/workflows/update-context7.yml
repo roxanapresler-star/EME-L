@@ -1,0 +1,29 @@
+name: Update Context7 Docs
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-context7]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh Context7
+        id: context7
+        uses: rennf93/upsert-context7@1.1
+        with:
+          operation: refresh
+
+      - name: Show result
+        run: |
+          echo "Success: ${{ steps.context7.outputs.success }}"
+          echo "Status: ${{ steps.context7.outputs.status-code }}"
+          echo "Message: ${{ steps.context7.outputs.message }}"
