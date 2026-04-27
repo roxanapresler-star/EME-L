@@ -55,14 +55,14 @@
 ### SetRealMode — обход по физике
 
 ```eme-l
-' Обход всех строк записи подряд в EME-L
+'Обход всех строк записи подряд в EME-L'
 r_GoodsItem = Object("dsDB", "GoodsItem");
 r_GoodsItem.SetRealMode();
 
 For (r_GoodsItem.SetFirstLine(); r_GoodsItem.IsValidLine(); r_GoodsItem.SetNextLine())
-    ' Обработка каждой строки
+    'Обработка каждой строки'
     name = r_GoodsItem.GetNameFld();
-    ' ... бизнес-логика ...
+    '... бизнес-логика ...'
 End For
 ```
 
@@ -71,24 +71,24 @@ End For
 ### SetSkipMode — обход с условиями
 
 ```eme-l
-' Поиск документов по типу и дате в EME-L
+'Поиск документов по типу и дате в EME-L'
 r_Document = Object("dsDB", "Document");
 r_Document.SetSkipMode();
 
-' Добавляем условия фильтрации
-r_Document.GetDocumentTypeRefFld().MustBeRefEQ(0); ' Тип = Приход
+'Добавляем условия фильтрации'
+r_Document.GetDocumentTypeRefFld().MustBeRefEQ(0); 'Тип = Приход'
 r_Document.GetCreateDateFld().MustBeGE(startDate);
 r_Document.GetCreateDateFld().MustBeLE(endDate);
-r_Document.MustBeValid(); ' Только неудалённые
+r_Document.MustBeValid(); 'Только неудалённые'
 
-' Устанавливаем на первую найденную строку
+'Устанавливаем на первую найденную строку'
 r_Document.SetFirstLine();
 
 While (r_Document.IsValidLine())
-    ' Обработка найденного документа
+    'Обработка найденного документа'
     docNo = r_Document.GetRegNo();
     
-    ' Переход к следующей найденной строке
+    'Переход к следующей найденной строке'
     r_Document.SetNextLine();
 End While
 ```
@@ -98,16 +98,16 @@ End While
 ### SetSkipMode по индексу
 
 ```eme-l
-' Быстрый поиск по индексированному полю в EME-L
+'Быстрый поиск по индексированному полю в EME-L'
 r_Stamps = Object("dsDB", "Stamps");
 r_Stamps.SetSkipMode("Индекс номер марки");
 
-' Условие по индексированному полю
+'Условие по индексированному полю'
 r_Stamps.GetNumberFld().MustBeEQ(stampNumber);
 r_Stamps.SetFirstLine();
 
 If (r_Stamps.IsValidLine())
-    ' Марка найдена
+    'Марка найдена'
     Return r_Stamps.GetLine();
 End If
 ```
@@ -115,11 +115,11 @@ End If
 ### SetSkipMode по нескольким полям индекса
 
 ```eme-l
-' Поиск по составному индексу в EME-L
+'Поиск по составному индексу в EME-L'
 r_Stamps = Object("dsDB", "Stamps");
 r_Stamps.SetSkipMode("Индекс партия - номер");
 
-' Используем MustBeIndexEQ для нескольких полей
+'Используем MustBeIndexEQ для нескольких полей'
 r_Stamps.MustBeIndexEQ(lotRef, serialNo);
 r_Stamps.SetFirstLine();
 ```
@@ -127,21 +127,21 @@ r_Stamps.SetFirstLine();
 ### SetChainMode — обход по цепочке
 
 ```eme-l
-' Обход строк документа по цепочке в EME-L
+'Обход строк документа по цепочке в EME-L'
 r_Document = Object("dsDB", "Document");
 r_Document.SetLine(docRef);
 
-' Получаем строки документа через реляционный путь
+'Получаем строки документа через реляционный путь'
 r_DocLines = r_Document.GetDocLines();
 
-' Перебираем строки в цепочке (очень быстро!)
+'Перебираем строки в цепочке (очень быстро!)'
 Loop(r_DocLines)
 {
-    ' Обработка строки документа
+    'Обработка строки документа'
     qty = r_DocLines.GetQtyN();
     goodsItem = r_DocLines.GetGoodsItemRefFld();
     
-    ' ... бизнес-логика ...
+    '... бизнес-логика ...'
 }
 ```
 
@@ -150,21 +150,21 @@ Loop(r_DocLines)
 ### SetFindMode — поиск по хэш-таблице
 
 ```eme-l
-' Поиск нескольких значений с построением хэш-таблицы в EME-L
+'Поиск нескольких значений с построением хэш-таблицы в EME-L'
 r_GoodsItem = Object("dsDB", "GoodsItem");
 r_GoodsItem.SetFindMode("CodeFld", "NameFld");
 
-' Поиск выполняется один раз перед циклом
-' При первом поиске строится хэш-таблица
+'Поиск выполняется один раз перед циклом'
+'При первом поиске строится хэш-таблица'
 
 For (arrCodes.SetFirstLine(); arrCodes.IsValidLine(); arrCodes.SetNextLine())
     code = arrCodes.Get();
     
-    ' Поиск в хэш-таблице (быстро!)
+    'Поиск в хэш-таблице (быстро!)'
     r_GoodsItem.FindByValues(code);
     
     If (r_GoodsItem.IsValidLine())
-        ' Товар найден
+        'Товар найден'
     End If
 End For
 ```
@@ -195,15 +195,15 @@ End For
 ### Пример сложной фильтрации
 
 ```eme-l
-' Многоуровневая фильтрация в EME-L
+'Многоуровневая фильтрация в EME-L'
 r_DocLines = Object("dsDB", "DocLines");
 r_DocLines.SetSkipMode();
 
-' Условия фильтрации (важен порядок!)
-r_DocLines.GetDocumentRefFld().MustBeRefEQ(docRef);  ' Строки документа
-r_DocLines.GetGoodsItemRefFld().MustBeRefInBitBuffer(bbGoods); ' Товары из списка
-r_DocLines.GetQtyFld().MustBeGT(0);  ' Количество > 0
-r_DocLines.MustBeValid();  ' Не удалённые
+'Условия фильтрации (важен порядок!)'
+r_DocLines.GetDocumentRefFld().MustBeRefEQ(docRef);  'Строки документа'
+r_DocLines.GetGoodsItemRefFld().MustBeRefInBitBuffer(bbGoods); 'Товары из списка'
+r_DocLines.GetQtyFld().MustBeGT(0);  'Количество > 0'
+r_DocLines.MustBeValid();  'Не удалённые'
 
 r_DocLines.SetFirstLine();
 ```
@@ -217,12 +217,12 @@ r_DocLines.SetFirstLine();
 ### Методы ограничения
 
 ```eme-l
-' Ограничение области поиска в EME-L
+'Ограничение области поиска в EME-L'
 r_Lines = Object("dsDB", "LargeRecord");
 r_Lines.SetSkipMode();
 r_Lines.GetNameFld().MustBeEQ(name);
 
-' Ограничение начальной позиции
+'Ограничение начальной позиции'
 nStartLine = r_Lines.GetNoOfLines() - 4000000;
 If (nStartLine > 0)
     r_Lines.SetLine(nStartLine);
@@ -252,26 +252,26 @@ End If
 ### Создание связи "один-ко-многим"
 
 ```eme-l
-' Пример структуры связи в EME БД:
-' Запись "Клиенты":
-'   Поле "@Звонки клиентов" - Ссылка на начало цепочки
-'   Указывает на запись "Звонки клиентов", поле "@Клиент"
+'Пример структуры связи в EME БД:'
+'Запись "Клиенты":'
+'  Поле "@Звонки клиентов" - Ссылка на начало цепочки'
+'  Указывает на запись "Звонки клиентов", поле "@Клиент"'
 
-' Запись "Звонки клиентов":
-'   Поле "@Клиент" - Ссылка на заголовок цепочки
-'   Поле "Сортировка по клиенту" - Сортировка-цепочка
-'     Первое поле: @Клиент
-'     Второе поле: Дата
+'Запись "Звонки клиентов":'
+'  Поле "@Клиент" - Ссылка на заголовок цепочки'
+'  Поле "Сортировка по клиенту" - Сортировка-цепочка'
+'    Первое поле: @Клиент'
+'    Второе поле: Дата'
 ```
 
 ### Навигация по ссылкам
 
 ```eme-l
-' Чтение по реляционному пути в EME-L
+'Чтение по реляционному пути в EME-L'
 r_Document = Object("dsDB", "Document");
 r_Document.SetLine(docRef);
 
-' Получение связанных данных через Get-методы
+'Получение связанных данных через Get-методы'
 warehouseName = r_Document.GetWarehouse().GetName();
 gatesCode = r_Document.GetGates().GetCode();
 clientName = r_Document.GetClient().GetNameFld();
@@ -286,20 +286,20 @@ clientName = r_Document.GetClient().GetNameFld();
 ### Создание новой строки
 
 ```eme-l
-' Создание новой строки записи в EME-L
+'Создание новой строки записи в EME-L'
 is_transaction(1, "Создание нового товара");
 
 r_GoodsItem = Object("dsDB", "GoodsItem");
 
-' Создание новой строки
+'Создание новой строки'
 r_GoodsItem.CreateNewLine();
 
-' Заполнение полей
+'Заполнение полей'
 r_GoodsItem.PutCodeFld("ART-001");
 r_GoodsItem.PutNameFld("Товар А");
 r_GoodsItem.PutBaseUnitRefFld(unitRef);
 
-' Применение новой строки
+'Применение новой строки'
 r_GoodsItem.ApplyNewLine();
 
 is_transaction(-1);
@@ -308,15 +308,15 @@ is_transaction(-1);
 ### Удаление строки
 
 ```eme-l
-' Удаление строки записи в EME-L
+'Удаление строки записи в EME-L'
 is_transaction(1, "Удаление товара");
 
 r_GoodsItem = Object("dsDB", "GoodsItem");
 r_GoodsItem.SetLine(goodsRef);
 
-' Проверка перед удалением
+'Проверка перед удалением'
 If (r_GoodsItem.IsValidLine())
-    ' Удаление строки
+    'Удаление строки'
     r_GoodsItem.DeleteLine();
 End If
 
@@ -326,15 +326,15 @@ is_transaction(-1);
 ### Мягкое удаление (SetDeleted)
 
 ```eme-l
-' Мягкое удаление (без физического удаления) в EME-L
+'Мягкое удаление (без физического удаления) в EME-L'
 r_DocLines = Object("dsDB", "DocLines");
 r_DocLines.SetLine(lineRef);
-r_DocLines.SetDeleted();  ' Помечаем как удалённую
+r_DocLines.SetDeleted();  'Помечаем как удалённую'
 
-' Преимущества: 
-' - Быстрее физического удаления
-' - Можно восстановить
-' - Не нарушает сортировки
+'Преимущества: '
+'- Быстрее физического удаления'
+'- Можно восстановить'
+'- Не нарушает сортировки'
 ```
 
 ## Влияние удалённых строк на производительность
@@ -352,13 +352,13 @@ r_DocLines.SetDeleted();  ' Помечаем как удалённую
 ### Решение
 
 ```eme-l
-' Правильная работа с записью, где много удалённых строк
+'Правильная работа с записью, где много удалённых строк'
 r_Lines = Object("dsDB", "LargeRecord");
 r_Lines.SetSkipMode();
 
-' Первое условие должно отсекать удалённые строки!
-r_Lines.GetGoodsItemRefFld().MustBeRefEQ(validRef);  ' NULL_REF будет отсечён
-' или
+'Первое условие должно отсекать удалённые строки!'
+r_Lines.GetGoodsItemRefFld().MustBeRefEQ(validRef);  'NULL_REF будет отсечён'
+'или'
 r_Lines.GetFlagsFld().MustBeBitSet(validBit);
 
 r_Lines.SetFirstLine();
@@ -380,16 +380,16 @@ r_Lines.SetFirstLine();
 ### Примеры Put и Get
 
 ```eme-l
-' Работа с полями записи в EME-L
+'Работа с полями записи в EME-L'
 r_Document = Object("dsDB", "Document");
 r_Document.SetLine(docRef);
 
-' Чтение значений полей
+'Чтение значений полей'
 regNo = r_Document.GetRegNoFld();
 createDate = r_Document.GetCreateDateFld();
 docType = r_Document.GetDocumentTypeRefFld();
 
-' Запись значений полей
+'Запись значений полей'
 r_Document.PutRegNoFld("DOC-12345");
 r_Document.PutCreateDateFld(is_date());
 r_Document.PutDocumentTypeRefFld(0);
@@ -412,7 +412,7 @@ FROM
     [Товары]
 WHERE
 {
-    ' Фильтрация на EME-L
+    'Фильтрация на EME-L'
     Return is_query(,"Количество") > 0;
 }
 ```
@@ -428,14 +428,14 @@ WHERE
 Метод `AttachTimeFld()` привязывает поле времени к полю даты, что позволяет использовать `MustBeGT` и `MustBeLT` с полными значениями дата+время.
 
 ```eme-l
-' Совместное использование даты-времени в SkipMode
+'Совместное использование даты-времени в SkipMode'
 r_Document = Object("dsDB", "Document");
 r_Document.SetSkipMode();
 
-' Привязываем поле времени к полю даты
+'Привязываем поле времени к полю даты'
 r_Document.GetCreateDateFld().AttachTimeFld();
 
-' Теперь можно фильтровать по дате и времени
+'Теперь можно фильтровать по дате и времени'
 r_Document.GetCreateDateFld().MustBeGT(is_date(19, 11, 2018, 11, 0));
 r_Document.GetCreateDateFld().MustBeLT(is_date(20, 11, 2018, 12, 0));
 r_Document.SetFirstLine();
@@ -465,7 +465,7 @@ r_Document.SetFirstLine();
 ### Алгоритм распределения количества
 
 ```eme-l
-' Распределение количества qty на N строк
+'Распределение количества qty на N строк'
 qtyLine = r_GoodsItemMU.RoundDn(qty / N);
 nLine = 0;
 
@@ -473,12 +473,12 @@ Loop(r_Doclines)
 {
     nLine = nLine + 1;
     If (nLine < N)
-        ' Запишем вычисленное кол-во во все строки, кроме последней
+        'Запишем вычисленное кол-во во все строки, кроме последней'
         r_Doclines.PutQty(qtyLine);
         qty = qty - qtyLine;
     Else
-        ' В последнюю строку записываем весь остаток
-        ' Округляем, так как при многократном вычитании погрешность накапливается
+        'В последнюю строку записываем весь остаток'
+        'Округляем, так как при многократном вычитании погрешность накапливается'
         qtyLine = r_GoodsItemMU.Round(qty);
         r_Doclines.PutQty(qtyLine);
     End If
@@ -516,13 +516,13 @@ End Loop
 Проверять на `IsValidLine()` нужно только если объект настраивается на строку методами `SetLine()`, `SetFirstLine()`, `SetNextLine()`.
 
 ```eme-l
-' НЕ НУЖНО проверять при чтении по реляционному пути
-code = r_Document.GetGates().GetCode();  ' Верно, даже если NULL_REF
+'НЕ НУЖНО проверять при чтении по реляционному пути'
+code = r_Document.GetGates().GetCode();  'Верно, даже если NULL_REF'
 
-' НУЖНО проверять после SetLine
+'НУЖНО проверять после SetLine'
 r_Document.SetLine(docRef);
-If (r_Document.IsValidLine())  ' Обязательно!
-    ' Обработка
+If (r_Document.IsValidLine())  'Обязательно!'
+    'Обработка'
 End If
 ```
 

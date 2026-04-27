@@ -13,7 +13,7 @@
 **Требование:** Не изменяйте Test1. Исправьте реализацию в Solution1.
 
 ```EME-L
-' Тестовая функция - не изменять
+'Тестовая функция - не изменять'
 Test1()
 {
     startTime = is_get_tick_count();
@@ -24,7 +24,7 @@ Test1()
     is_message("Вывод", csMess);
 }
 
-' Исходная реализация - содержит ошибки производительности
+'Исходная реализация - содержит ошибки производительности'
 Solution1()
 {
     Count = 0;
@@ -55,7 +55,7 @@ Solution1()
 **Как изменить:** Внешний цикл по r_GoodsItem лишний. Внутренний цикл по r_GoodsItemMU проходит по всем товарам, нужно оставить его и переделать на SkipMode.
 
 ```EME-L
-' Оптимизированная реализация
+'Оптимизированная реализация'
 Solution1()
 {
     Count = 0;
@@ -86,7 +86,7 @@ Solution1()
 **Требование:** Не изменяйте Test2. Напишите реализацию в Solution2.
 
 ```EME-L
-' Тестовая функция - не изменять
+'Тестовая функция - не изменять'
 Test2()
 {
     r_GoodsItemMU = Object("dsDB", "GoodsItemMU");
@@ -105,7 +105,7 @@ Test2()
     is_message("Вывод", csMess);
 }
 
-' Правильная реализация
+'Правильная реализация'
 Solution2(MapMU)
 {
     Count = 0;
@@ -140,7 +140,7 @@ Solution2(MapMU)
 **Требование:** Не изменяйте Test3. Напишите реализацию в Solution3.
 
 ```EME-L
-' Тестовая функция - не изменять
+'Тестовая функция - не изменять'
 Test3()
 {
     MapMU = Object("Map");
@@ -160,7 +160,7 @@ Test3()
     is_message("Вывод", csMess);
 }
 
-' Правильная реализация
+'Правильная реализация'
 Solution3(MapMU)
 {
     Count = 0;
@@ -212,7 +212,7 @@ RunBtn_OnCommand()
     CreateDocumentsForOrders(true);
     PrintReportShipmentPlaces();
     
-    ' Постановка в буфер после просчёта
+    'Постановка в буфер после просчёта'
     If(is_sys_param("M://Предпочтения.Уход.Выключить постановку в буфер после просчета", "", 1) != "ДА")
         dbBatch = Object("dsDB", "OrdersBatch");
         dbBatch.SetLine(is_dlg_line());
@@ -240,7 +240,7 @@ RunBtn_OnCommand()
 **Проблема с названием настройки:** «Выключить постановку в буфер после просчета» — плохое название (отрицание). Хорошее: «Ставить строки в буфер после просчета пачки» — значение «Да» включает, «Нет» выключает.
 
 ```EME-L
-' Пример метода с ошибками:
+'Пример метода с ошибками:'
 OrderLinesMoveSrcToBuf(r_OrderBatch)
 {
     r_Document = r_OrderBatch.GetPalletPickingUp();
@@ -259,9 +259,9 @@ OrderLinesMoveSrcToBuf(r_OrderBatch)
                 Continue;
             End If
             If (r_DocLines.IsGoodsInBuffer())
-                Continue;  ' ОШИБКА: IsGoodsLoaded() не проверяется!'
+                Continue;  'ОШИБКА: IsGoodsLoaded() не проверяется!'
             End If
-            Res = r_DocLines.MoveSrcToBuf(0, context);  ' ОШИБКА: нет проверки типа документа!'
+            Res = r_DocLines.MoveSrcToBuf(0, context);  'ОШИБКА: нет проверки типа документа!'
             If (Res!="Ok")
                 csMess = Res;
             End If
@@ -280,31 +280,31 @@ OrderLinesMoveSrcToBuf(r_OrderBatch)
 ### 1. Создание объектов вне циклов
 
 ```EME-L
-' НЕПРАВИЛЬНО: объект создаётся в каждой итерации
+'НЕПРАВИЛЬНО: объект создаётся в каждой итерации'
 Loop (r_Document)
 {
     r_DocLines = Object("dsDB", "DocLines");
-    ' ... обработка ...
+    '... обработка ...'
 }
 
-' ПРАВИЛЬНО: объект создаётся один раз
+'ПРАВИЛЬНО: объект создаётся один раз'
 r_DocLines = Object("dsDB", "DocLines");
 Loop (r_Document)
 {
-    ' ... обработка ...
+    '... обработка ...'
 }
 ```
 
 ### 2. Использование Const для кэширования
 
 ```EME-L
-' НЕПРАВИЛЬНО: выражение вычисляется для каждой строки
+'НЕПРАВИЛЬНО: выражение вычисляется для каждой строки'
 WHERE
 {
     Return is_query(,"Дата") == is_edit_data("Report.Date");
 }
 
-' ПРАВИЛЬНО: значение кэшируется
+'ПРАВИЛЬНО: значение кэшируется'
 WHERE
 {
     NeedDate = Const(is_edit_data("Report.Date"));
@@ -324,27 +324,27 @@ WHERE
 ### 4. Правильный размер Map
 
 ```EME-L
-' Рекомендованный размер: 1.3 * ожидаемое количество элементов
-mapGoods = Object("Map", 13000); ' Если ожидается ~10000 товаров
+'Рекомендованный размер: 1.3 * ожидаемое количество элементов'
+mapGoods = Object("Map", 13000); 'Если ожидается ~10000 товаров'
 
-' С ростом данных из-за коллизий появляется нелинейное замедление
-' Неудачный выбор размера может сильно замедлить программу
+'С ростом данных из-за коллизий появляется нелинейное замедление'
+'Неудачный выбор размера может сильно замедлить программу'
 ```
 
 ### 5. Цепочки вместо SkipMode для связанных данных
 
 ```EME-L
-' НЕОПТИМАЛЬНО: SkipMode для строк документа
+'НЕОПТИМАЛЬНО: SkipMode для строк документа'
 r_DocLines = Object("dsDB", "DocLines");
 r_DocLines.SetSkipMode();
 r_DocLines.GetDocumentRefFld().MustBeRefEQ(docRef);
 r_DocLines.SetFirstLine();
 
-' ОПТИМАЛЬНО: ChainMode для строк документа
+'ОПТИМАЛЬНО: ChainMode для строк документа'
 r_Document = Object("dsDB", "Document");
 r_Document.SetLine(docRef);
 r_DocLines = r_Document.GetDocLines();
-' Цепочка уже настроена автоматически
+'Цепочка уже настроена автоматически'
 ```
 
 ---

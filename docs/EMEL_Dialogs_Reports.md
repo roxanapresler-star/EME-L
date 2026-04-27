@@ -59,9 +59,9 @@
    - Указать поле записи БД
 
 ```eme-l
-' Пример привязки органа к полю в EME-L
-' Орган "Name" привязан к полю "Наименование" записи "Товары"
-' При изменении значения в органе автоматически обновляется поле БД
+'Пример привязки органа к полю в EME-L'
+'Орган "Name" привязан к полю "Наименование" записи "Товары"'
+'При изменении значения в органе автоматически обновляется поле БД'
 ```
 
 ## Обработчики событий диалога
@@ -86,12 +86,12 @@
 ### Пример Dialog_OnLoad
 
 ```eme-l
-' Инициализация диалога при загрузке (онлоад)
+'Инициализация диалога при загрузке (онлоад)'
 Dialog_OnLoad()
 {
     Dialog = Object("Dialog");
     
-    ' Установка значений по умолчанию
+    'Установка значений по умолчанию'
     If (StartDate.GetValue() == 0)
         StartDate.SetValue(is_date());
     End If
@@ -100,12 +100,12 @@ Dialog_OnLoad()
         EndDate.SetValue(is_date());
     End If
     
-    ' Настройка связанного календаря
+    'Настройка связанного календаря'
     ctrlStart = Object("Control",,"StartDate");
     ctrlEnd = Object("Control",,"EndDate");
     Dialog.SetControlDateRange(ctrlStart, ctrlEnd);
     
-    ' Загрузка драйвера сканера
+    'Загрузка драйвера сканера'
     Dialog.LoadScannerDriver(0);
 }
 ```
@@ -113,12 +113,12 @@ Dialog_OnLoad()
 ### Пример Dialog_OnCheck
 
 ```eme-l
-' Валидация данных перед сохранением (ончек)
+'Валидация данных перед сохранением (ончек)'
 Dialog_OnCheck(Transaction)
 {
-    ' Если транзакция уже открыта, пропускаем проверки
+    'Если транзакция уже открыта, пропускаем проверки'
     If (~Transaction)
-        ' Проверка обязательных полей
+        'Проверка обязательных полей'
         If (Name.IsEmpty())
             is_message("Внимание!", "Не заполнено наименование", 1);
             Name.SetFocus();
@@ -131,7 +131,7 @@ Dialog_OnCheck(Transaction)
             Return 1;
         End If
         
-        ' Проверка уникальности кода
+        'Проверка уникальности кода'
         r_GoodsItem = Object("dsDB", "GoodsItem");
         r_GoodsItem.SetSkipMode();
         r_GoodsItem.GetCodeFld().MustBeEQ(Code.GetValue());
@@ -151,16 +151,16 @@ Dialog_OnCheck(Transaction)
 ### Пример Dialog_OnClose
 
 ```eme-l
-' Обработка закрытия диалога (онклоуз)
+'Обработка закрытия диалога (онклоуз)'
 Dialog_OnClose(CloseType)
 {
     Dialog = Object("Dialog");
     
-    ' Выгрузка драйвера сканера
+    'Выгрузка драйвера сканера'
     Dialog.UnloadScannerDriver(0);
     
-    ' Проверка несохранённых изменений
-    If (CloseType == 2)  ' Закрытие без сохранения
+    'Проверка несохранённых изменений'
+    If (CloseType == 2)  'Закрытие без сохранения'
         If (is_edit_data("IsModified") == 1)
             If (is_message("Подтверждение", "Сохранить изменения?", "YESNO", "QUESTION") == "YES")
                 Dialog.Save();
@@ -179,20 +179,20 @@ Dialog_OnClose(CloseType)
 ### Получение и установка значений
 
 ```eme-l
-' Работа с органами диалога в EME-L
+'Работа с органами диалога в EME-L'
 Dialog_OnLoad()
 {
-    ' Получение значения органа
+    'Получение значения органа'
     nameValue = Name.GetValue();
     qtyValue = Quantity.GetValue();
     dateValue = DateField.GetValue();
     
-    ' Установка значения органа
+    'Установка значения органа'
     Name.SetValue("Новое наименование");
     Quantity.SetValue(100);
     DateField.SetValue(is_date());
     
-    ' Очистка органа
+    'Очистка органа'
     Name.Clear();
 }
 ```
@@ -200,22 +200,22 @@ Dialog_OnLoad()
 ### Управление видимостью и доступностью
 
 ```eme-l
-' Управление состоянием органов в EME-L
+'Управление состоянием органов в EME-L'
 Dialog_OnLoad()
 {
-    ' Скрыть орган
+    'Скрыть орган'
     AdditionalField.Hide();
     
-    ' Показать орган
+    'Показать орган'
     AdditionalField.Show();
     
-    ' Заблокировать орган
+    'Заблокировать орган'
     ReadOnlyField.SetReadOnly(True);
     
-    ' Разблокировать орган
+    'Разблокировать орган'
     EditableField.SetReadOnly(False);
     
-    ' Установить фокус
+    'Установить фокус'
     Name.SetFocus();
 }
 ```
@@ -236,29 +236,29 @@ Dialog_OnLoad()
 4. Добавить колонки через контекстное меню
 
 ```eme-l
-' Настройка таблицы строк документа в EME-L
-' Таблица "DocLinesTable" привязана к записи "Строки документа"
-' Поле обратной ссылки: @Документ
+'Настройка таблицы строк документа в EME-L'
+'Таблица "DocLinesTable" привязана к записи "Строки документа"'
+'Поле обратной ссылки: @Документ'
 
-' При переходе между документами таблица автоматически показывает
-' связанные строки через цепочку
+'При переходе между документами таблица автоматически показывает'
+'связанные строки через цепочку'
 ```
 
 ### Обработка событий таблицы
 
 ```eme-l
-' Событие выбора строки в таблице
+'Событие выбора строки в таблице'
 Table_OnSelect()
 {
-    ' Получение выбранной строки
+    'Получение выбранной строки'
     lineRef = DocLinesTable.GetLine();
     
     If (lineRef != NULL_REF)
-        ' Обработка выбранной строки
+        'Обработка выбранной строки'
         r_DocLines = Object("dsDB", "DocLines");
         r_DocLines.SetLine(lineRef);
         
-        ' Вывод информации
+        'Вывод информации'
         Report(r_DocLines.GetGoodsItem().GetNameFld());
     End If
 }
@@ -295,32 +295,32 @@ Table_OnSelect()
 ### Привязка ячейки DBField
 
 ```eme-l
-' Ячейка получает значение из диалога
-' Таблица: Привязанный диалог
-' Орган: Name (имя органа диалога)
+'Ячейка получает значение из диалога'
+'Таблица: Привязанный диалог'
+'Орган: Name (имя органа диалога)'
 
-' Ячейка получает значение из запроса
-' Имя DLL: MetR_SyS.dll
-' Имя функции: rs_cell_query
-' Параметры:
-'   - Запрос к EME DB: "ИмяЗапроса"
-'   - Поле запроса: "ИмяПоля"
+'Ячейка получает значение из запроса'
+'Имя DLL: MetR_SyS.dll'
+'Имя функции: rs_cell_query'
+'Параметры:'
+'  - Запрос к EME DB: "ИмяЗапроса"'
+'  - Поле запроса: "ИмяПоля"'
 ```
 
 ### Настройка бандов
 
 ```eme-l
-' Банд "SQL-отчёт" для разворачивания строк
-' Имя DLL: MetR_SyS.dll
-' Имя функции: rs_main_query
-' Параметры:
-'   - Запрос к EME DB: "ИмяЗапроса"
+'Банд "SQL-отчёт" для разворачивания строк'
+'Имя DLL: MetR_SyS.dll'
+'Имя функции: rs_main_query'
+'Параметры:'
+'  - Запрос к EME DB: "ИмяЗапроса"'
 ```
 
 ### Пример отчёта с запросом
 
 ```eme-sql
-' Запрос для отчёта
+'Запрос для отчёта'
 SELECT
     [Номер документа],
     [Дата создания],
@@ -357,16 +357,16 @@ ORDER BY
 ### Программный вызов отчёта
 
 ```eme-l
-' Вызов отчёта из EME-L кода
+'Вызов отчёта из EME-L кода'
 Dialog_OnAfterUpdate()
 {
-    ' Формирование списка отчётов
+    'Формирование списка отчётов'
     arrReports = Object("Array");
     arrReports.Add("Накладная");
     arrReports.Add("Счёт-фактура");
     arrReports.Add("ТТН");
     
-    ' Отображение меню отчётов
+    'Отображение меню отчётов'
     Dialog.ShowReports(arrReports, True);
 }
 ```
@@ -374,22 +374,22 @@ Dialog_OnAfterUpdate()
 ### Обработка события отчёта
 
 ```eme-l
-' Обработка формирования отчёта (онрепорт)
+'Обработка формирования отчёта (онрепорт)'
 Dialog_OnReport(Name)
 {
-    ' Name содержит название выбранного отчёта
+    'Name содержит название выбранного отчёта'
     
     If (Name == "Накладная")
-        ' Настройка параметров отчёта
+        'Настройка параметров отчёта'
         PrintReport("Накладная", dsDB);
     End If
     
     If (Name == "Счёт-фактура")
-        ' Настройка параметров отчёта
+        'Настройка параметров отчёта'
         PrintReport("Счёт-фактура", dsDB);
     End If
     
-    ' Возвращаем True, чтобы ядро не выполняло стандартную обработку
+    'Возвращаем True, чтобы ядро не выполняло стандартную обработку'
     Return True;
 }
 ```
@@ -413,40 +413,40 @@ Dialog_OnReport(Name)
 ### Пример класса отчёта по будильнику
 
 ```eme-l
-' Класс для автоматического формирования отчёта в EME-L
+'Класс для автоматического формирования отчёта в EME-L'
 Class DailySalesReport extends ReportsForMail
 {
-    ' Конструктор класса
+    'Конструктор класса'
     objReport = Object("IClass", "ReportRunner", "ReportRunner");
     
-    ' Название отчёта
+    'Название отчёта'
     GetReportCaption()
     {
         Return "Ежедневный отчёт по продажам";
     }
     
-    ' Имя шаблона отчёта
+    'Имя шаблона отчёта'
     GetNameReport()
     {
         Return "DailySalesReport";
     }
     
-    ' Формирование отчёта
+    'Формирование отчёта'
     RunReports()
     {
-        ' Установка параметров
+        'Установка параметров'
         objReport.SetReportName(GetNameReport());
         objReport.SetQueryName("DailySalesQuery");
         objReport.SetCaption(GetReportCaption());
         
-        ' Формирование файла отчёта
+        'Формирование файла отчёта'
         CreateReportFile(objReport, GetNameReport());
     }
     
-    ' Создание файла отчёта
+    'Создание файла отчёта'
     CreateReportFile(m_report, m_reportName)
     {
-        ' Создание отчёта и сохранение в HTML
+        'Создание отчёта и сохранение в HTML'
         Report = Object("Report", m_reportName);
         Report.Create();
         Report.SaveToFile("daily_sales_report.html");
@@ -477,13 +477,13 @@ Class DailySalesReport extends ReportsForMail
 - Видеть диалог: Нет
 
 ```eme-l
-' Настройка в свойствах отчёта:
-' Имя DLL: MetR_SyS.dll
-' Имя функции: rs_main_proxy
-' Параметры (кнопка "Параметры"):
-'   - Класс: ReportRunner
-'   - Ссылка: ReportRunner
-'   - Видеть диалог: Нет
+'Настройка в свойствах отчёта:'
+'Имя DLL: MetR_SyS.dll'
+'Имя функции: rs_main_proxy'
+'Параметры (кнопка "Параметры"):'
+'  - Класс: ReportRunner'
+'  - Ссылка: ReportRunner'
+'  - Видеть диалог: Нет'
 ```
 
 ## Правила оформления диалогов
@@ -609,39 +609,39 @@ End If
 Dialog_OnAfterUpdate()
 {
     arrReports = Object("Array");
-    ' список печатных форм заполняется в GetReport()
-    ' привязка отчётов в редакторе диалогов игнорируется
-    ' добавим один отчёт, чтобы получать Dialog_OnReport без меню
-    ' какой именно отчёт — неважно, важно что он привязан к шаблону
+    'список печатных форм заполняется в GetReport()'
+    'привязка отчётов в редакторе диалогов игнорируется'
+    'добавим один отчёт, чтобы получать Dialog_OnReport без меню'
+    'какой именно отчёт — неважно, важно что он привязан к шаблону'
     arrReports.Add("Лист вложения");
     Dialog.ShowReports(arrReports, TRUE);
 }
 
 Dialog_OnReport(Name)
 {
-    ' Name всегда содержит "Лист вложения", меню формируем сами
+    'Name всегда содержит "Лист вложения", меню формируем сами'
     dsDB.SetLine(is_dlg_line());
     
-    ' создаём меню, отображаем его, возвращаем выбранный отчёт
+    'создаём меню, отображаем его, возвращаем выбранный отчёт'
     reportName = GetReport(dsDB);
     
     If(reportName != "")
         PrintReport(reportName, dsDB);
     End If
     
-    ' ядро ничего не делает — отчёт формируем в EME-L
+    'ядро ничего не делает — отчёт формируем в EME-L'
     Return TRUE;
 }
 
 GetReport(r_Order)
 {
-    ' список доступных форм зависит от статуса
+    'список доступных форм зависит от статуса'
     nStatus = r_Order.GetStatusAsNumber();
     
     menu = Object("Menu", TRUE);
     arrReports = Object("Array");
     
-    ' подменю с вложенными отчётами
+    'подменю с вложенными отчётами'
     submenu = Object("Menu", TRUE);
     submenu.AppendMenu("STRING", arrReports.Add("ТТН"), "ТТН");
     submenu.AppendMenu("STRING", arrReports.Add("Накладная"), "Накладная");
@@ -735,25 +735,25 @@ OnBeginReport()
 Для передачи параметров из диалога в запрос используется класс `ReportRunner`. Класс содержит интерфейсные методы для чтения фильтров, к которым можно обращаться из отчёта и запроса:
 
 ```EME-L
-' Получить дату начала периода из ReportRunner:
+'Получить дату начала периода из ReportRunner:'
 Object().GetDateBegin();
 
-' Получить параметры запуска:
+'Получить параметры запуска:'
 Object().GetParameters();
 ```
 
 Пример передачи параметров:
 
 ```EME-L
-' В классе диалога читаем параметр из поля:
+'В классе диалога читаем параметр из поля:'
 SectorWith = Object("Control",,"SectorWith");
 Param.SetParam("SectorWith", SectorWith.Get());
 
-' В классе отчёта по будильнику устанавливаем константу:
+'В классе отчёта по будильнику устанавливаем константу:'
 MinSector = 1;
 Param.SetParam("SectorWith", MinSector);
 
-' В запросе получаем значение:
+'В запросе получаем значение:'
 r_Parameters = CONST(Object().GetParameters());
 SectorWith = CONST(is_type(r_Parameters.GetParam("SectorWith"),1));
 ```

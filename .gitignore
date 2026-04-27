@@ -27,3 +27,15 @@ EMEL_Programming_Language/
 *.png
 *.jpg
 *.gif
+
+# Temp files
+vol_0.md
+AGENTS.md
+.opencode_work/
+
+# Python temp files
+__pycache__/
+*.pyc
+*.pyo
+*.pyb
+tmp_*.py

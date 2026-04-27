@@ -40,23 +40,23 @@ SQL-запросы в EME.WMS хранятся в базе данных вмес
 ### Описание полей
 
 ```eme-sql
-' Простые поля в квадратных скобках
+'Простые поля в квадратных скобках'
 SELECT
     [Идентификатор],
     [Наименование],
     [Количество]
 
-' Вычисляемые поля с указанием типа
+'Вычисляемые поля с указанием типа'
 SELECT
     {Return is_date();}:DATE AS [Дата],
     {Return 1;}:INT AS [Признак]
 
-' Поля-ссылки через реляционный путь
+'Поля-ссылки через реляционный путь'
 SELECT
     [@Склад].[Наименование] AS [Склад],
     [@Клиент].[ИНН] AS [ИНН клиента]
 
-' Агрегатные функции
+'Агрегатные функции'
 SELECT
     SUM([Количество]):FLOAT AS [Всего],
     COUNT({Return 1;}:INT) AS [Количество строк]
@@ -65,14 +65,14 @@ SELECT
 ### Источник данных (FROM)
 
 ```eme-sql
-' Из записи
+'Из записи'
 FROM [Документы]
 
-' Из другого запроса
+'Из другого запроса'
 FROM [Запросы.Отчёт по документам]
 
-' Создание новых строк
-FROM NEW{11}  ' Создаёт 11 пустых строк
+'Создание новых строк'
+FROM NEW{11}  'Создаёт 11 пустых строк'
 ```
 
 ## Фильтрация данных
@@ -91,7 +91,7 @@ FROM
     [Звонки клиентов]
 WHERE
 {
-    ' EME-L код фильтрации
+    'EME-L код фильтрации'
     NeedData = Const(is_edit_data("Report.Date"));
     Return is_query(,"Дата") == NeedData;
 }
@@ -112,30 +112,30 @@ FROM
     [Строки документа]
 WITH
 {
-    ' Создание объекта запроса
+    'Создание объекта запроса'
     objQuery = is_context("Query");
     
-    ' Выбор заголовков документов через SkipMode
+    'Выбор заголовков документов через SkipMode'
     r_Document = Object("dsDB", "Document");
     r_Document.SetSkipMode();
     
-    ' Фильтрация по дате создания
+    'Фильтрация по дате создания'
     r_Document.GetCreateDateFld().MustBeGE(is_edit_data("Report.StartDate"));
     r_Document.GetCreateDateFld().MustBeLE(is_edit_data("Report.EndDate"));
     
-    ' Фильтрация по типу документа
+    'Фильтрация по типу документа'
     r_Document.GetDocumentTypeRefFld().MustBeRefEQ(0);
     
-    ' Загрузка подходящих документов в битовый буфер
+    'Загрузка подходящих документов в битовый буфер'
     bbDocs = Object("BitBuffer", is_No_of_lines("Документы"));
     bbDocs.LoadLines(r_Document);
     
-    ' Фильтрация строк документа
+    'Фильтрация строк документа'
     r_DocLines = Object("dsDB", "DocLines");
     r_DocLines.SetSkipMode();
     r_DocLines.GetDocumentRefFld().MustBeRefInBitBuffer(bbDocs);
     
-    ' Загрузка строк в запрос
+    'Загрузка строк в запрос'
     objQuery.LoadLines(r_DocLines);
 }
 ```
@@ -143,14 +143,14 @@ WITH
 ### Важные функции для фильтрации
 
 ```eme-l
-' is_edit_data("Орган") — получение значения из органа диалога
-' is_query("Поле") — получение значения поля текущей строки запроса
-' Const() — оптимизация для константных значений
+'is_edit_data("Орган") — получение значения из органа диалога'
+'is_query("Поле") — получение значения поля текущей строки запроса'
+'Const() — оптимизация для константных значений'
 
-' Пример с Const:
+'Пример с Const:'
 WHERE
 {
-    NeedDate = Const(is_edit_data("Report.Date"));  ' Вычисляется один раз
+    NeedDate = Const(is_edit_data("Report.Date"));  'Вычисляется один раз'
     Return is_query(,"Дата") == NeedDate;
 }
 ```
@@ -269,11 +269,11 @@ ORDER BY
 ### Полезные функции
 
 ```eme-sql
-' is_line() — номер текущей строки
-' is_date() — текущая дата
-' is_time() — текущее время
-' is_query("Поле") — значение поля текущей строки
-' is_edit_data("Орган") — значение из диалога
+'is_line() — номер текущей строки'
+'is_date() — текущая дата'
+'is_time() — текущее время'
+'is_query("Поле") — значение поля текущей строки'
+'is_edit_data("Орган") — значение из диалога'
 
 SELECT
     {Return is_line();}:INT AS [Номер строки],
@@ -285,7 +285,7 @@ FROM NEW{10}
 ### Пример с константами
 
 ```eme-sql
-' Константные значения
+'Константные значения'
 SELECT
     {Return is_date() - 1;}:DATE AS [Дата начала],
     {Return is_time(0,0,0);}:TIME AS [Время начала],
@@ -303,12 +303,12 @@ FROM NEW{1}
 ### Примеры
 
 ```eme-sql
-' Генерация диапазона времени
+'Генерация диапазона времени'
 SELECT
     {Time=is_time(8+is_line(),0); Return Time;}:TIME AS [Время]
 FROM NEW{11}
 
-' Константные значения
+'Константные значения'
 SELECT
     {Return "Значение";}:STRING AS [Столбец]
 FROM NEW{1}
@@ -328,11 +328,11 @@ FROM NEW{1}
 4. Пробелы после `}` и до типа недопустимы
 
 ```eme-sql
-' Правильно:
+'Правильно:'
 {Return is_date();}:DATE
 
-' Неправильно:
-{Return is_date();} :DATE  ' Пробел недопустим!
+'Неправильно:'
+{Return is_date();} :DATE  'Пробел недопустим!'
 ```
 
 ### Сложные вычисления
@@ -340,7 +340,7 @@ FROM NEW{1}
 ```eme-sql
 SELECT
     {
-        ' Сложный расчёт в EME-L
+        'Сложный расчёт в EME-L'
         qty = is_query(,"Количество");
         price = is_query(,"Цена");
         total = qty * price;
@@ -359,13 +359,13 @@ FROM
 ### Использование Const
 
 ```eme-sql
-' НЕОПТИМАЛЬНО: is_edit_data вызывается для каждой строки
+'НЕОПТИМАЛЬНО: is_edit_data вызывается для каждой строки'
 WHERE
 {
     Return is_query(,"Дата") == is_edit_data("Report.Date");
 }
 
-' ОПТИМАЛЬНО: значение вычисляется один раз
+'ОПТИМАЛЬНО: значение вычисляется один раз'
 WHERE
 {
     NeedDate = Const(is_edit_data("Report.Date"));
@@ -376,14 +376,14 @@ WHERE
 ### Оптимизация объектов
 
 ```eme-sql
-' НЕОПТИМАЛЬНО: объект создаётся в каждой строке
+'НЕОПТИМАЛЬНО: объект создаётся в каждой строке'
 {
     dbRegs = Object("dsDB", "Registers");
     dbRegs.SetLine(is_query(,"@"));
     Return dbRegs.GetQtyN();
 }:FLOAT
 
-' ОПТИМАЛЬНО: объект создаётся один раз
+'ОПТИМАЛЬНО: объект создаётся один раз'
 {
     dbRegs = Const(Object("dsDB", "Registers"));
     dbRegs.SetLine(is_query(,"@"));
@@ -394,18 +394,18 @@ WHERE
 ### Использование WITH вместо WHERE
 
 ```eme-sql
-' ПРЕДПОЧТИТЕЛЬНО: загрузка строк через WITH
+'ПРЕДПОЧТИТЕЛЬНО: загрузка строк через WITH'
 FROM [Строки документа]
 WITH
 {
-    ' Предварительная фильтрация через SkipMode
+    'Предварительная фильтрация через SkipMode'
     r_DocLines = Object("dsDB", "DocLines");
     r_DocLines.SetSkipMode();
     r_DocLines.GetDocumentRefFld().MustBeRefEQ(docRef);
     objQuery.LoadLines(r_DocLines);
 }
 
-' МЕНЕЕ ЭФФЕКТИВНО: фильтрация через WHERE
+'МЕНЕЕ ЭФФЕКТИВНО: фильтрация через WHERE'
 FROM [Строки документа]
 WHERE
 {
@@ -418,7 +418,7 @@ WHERE
 ### Запрос с соединением и группировкой
 
 ```eme-sql
-' Отчёт по продажам по клиентам
+'Отчёт по продажам по клиентам'
 SELECT
     [@Клиент].[Наименование] AS [Клиент],
     COUNT({Return 1;}:INT) AS [Количество заказов],
@@ -432,7 +432,7 @@ WITH
     
     r_Document = Object("dsDB", "Document");
     r_Document.SetSkipMode();
-    r_Document.GetDocumentTypeRefFld().MustBeRefEQ(1);  ' Отгрузка
+    r_Document.GetDocumentTypeRefFld().MustBeRefEQ(1);  'Отгрузка'
     r_Document.GetCreateDateFld().MustBeGE(startDate);
     r_Document.GetCreateDateFld().MustBeLE(endDate);
     r_Document.MustBeValid();
@@ -455,7 +455,7 @@ FROM
     [Строки документа]
 WHERE
 {
-    ' Проверка через подзапрос
+    'Проверка через подзапрос'
     r_Document = Object("dsDB", "Document");
     r_Document.SetLine(is_query(,"@Документ"));
     Return r_Document.GetDocumentTypeRefFld() == 0;
@@ -499,7 +499,7 @@ FROM NEW{0}
 **Синонимы для поиска:** условный фильтр, IF в SQL, is_get_context, входной фильтр
 
 ```eme-sql
-' Условный фильтр — работает только при запуске из отчёта
+'Условный фильтр — работает только при запуске из отчёта'
 IF {is_get_context("Report") != ""}
     SKIP * BY "qs_skip_rel_time_outside" WITH
     {is_edit_data("Report.StartDate") + is_edit_data("Report.StartTime") < Дата отгрузки заказа # Время отгрузки заказа < is_edit_data("Report.EndDate") + is_edit_data("Report.EndTime") < 0}
@@ -527,7 +527,7 @@ IF {is_get_context("Report") != ""}
 ### Пример подключения к PostgreSQL
 
 ```eme-l
-' Подключение к PostgreSQL из EME-L
+'Подключение к PostgreSQL из EME-L'
 ExternalDB = Object("ExternalDB");
 
 Error = ExternalDB.Connect("ODBC:Driver={PostgreSQL ANSI(x64)};Server=localhost;Database=TEST;Uid=postgres;Pwd=***;");
@@ -537,7 +537,7 @@ If (Error != "")
     Return;
 End If
 
-' Создание таблицы
+'Создание таблицы'
 Error = ExternalDB.CreateTable("test", Query);
 
 If (Error != "")
@@ -545,7 +545,7 @@ If (Error != "")
     Return;
 End If
 
-' Вставка данных
+'Вставка данных'
 Error = ExternalDB.InsertLines("test", Query);
 
 If (Error != "")
@@ -569,22 +569,22 @@ is_message("Успех", "OK", "OK", "EXCLAMATION");
 ### Использование dsQUERY для подготовки данных вне транзакции
 
 ```eme-l
-' Создаём запрос в памяти
+'Создаём запрос в памяти'
 m_QueryHeader = Object("Query");
 m_QueryHeader.Create();
 
-' Добавляем поля
+'Добавляем поля'
 m_QueryHeader.AddREF("@", q_PO.GetRecordName());
 m_QueryHeader.AddField(q_PO.GetFld("ID"));
 m_QueryHeader.AddField(q_PO.GetRegNoFld());
 m_QueryHeader.AddField(q_PO.GetFld("Date"));
 m_QueryHeader.AddField(q_PO.GetFld("Time"));
 
-' Указываем, что объект работает с запросом
+'Указываем, что объект работает с запросом'
 q_PO = Object("dsDB", "PurchaseOrder");
 q_PO.SetQuery(m_QueryHeader);
 
-' Теперь AppendAndSetLine работает с запросом, а не с БД
+'Теперь AppendAndSetLine работает с запросом, а не с БД'
 q_PO.AppendAndSetLine();
 q_PO.Put("ID", GetHeaderData("id"));
 q_PO.PutOrderNo(GetHeaderData("po_reg_no"));
@@ -593,7 +593,7 @@ q_PO.PutOrderNo(GetHeaderData("po_reg_no"));
 ### Блочная запись в БД через ConnectFields
 
 ```eme-l
-' Связываем поля запроса с полями записи БД
+'Связываем поля запроса с полями записи БД'
 r_PO = Object("dsDB", "PurchaseOrder");
 
 m_QueryHeader.ConnectFields(r_PO.GetFld("ID"));
@@ -601,7 +601,7 @@ m_QueryHeader.ConnectFields(r_PO.GetRegNoFld());
 m_QueryHeader.ConnectFields(r_PO.GetFld("Date"));
 m_QueryHeader.ConnectFields(r_PO.GetFld("Time"));
 
-' Блочная запись
+'Блочная запись'
 m_QueryHeader.Sort("@");
 Loop (m_QueryHeader)
 {
@@ -609,7 +609,7 @@ Loop (m_QueryHeader)
     m_QueryHeader.PutConnectData(m_QueryHeader.GetLine());
 End Loop
 
-' Сбрасываем буферы в БД — ОБЯЗАТЕЛЬНО!
+'Сбрасываем буферы в БД — ОБЯЗАТЕЛЬНО!'
 m_QueryHeader.DisconnectFields();
 ```
 

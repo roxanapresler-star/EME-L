@@ -92,7 +92,7 @@ For (r_Movements.SetFirstLine(); r_Movements.IsValidLine(); r_Movements.SetNextL
 End For
 
 'Сортируем по количеству'
-qTotals.Sort(1, False);  ' False — по убыванию'
+qTotals.Sort(1, False);  'False — по убыванию'
 
 'Выводим результат'
 For (row = 0; row < qTotals.GetNoOfLines(); row = row + 1)
@@ -596,28 +596,28 @@ End If
 ### Создание и заполнение запроса
 
 ```EME-L
-' Создаём запрос
+'Создаём запрос'
 m_QueryHeader = Object("Query");
 m_QueryHeader.Create();
 
-' Добавляем необходимые поля
+'Добавляем необходимые поля'
 m_QueryHeader.AddREF("@", q_PO.GetRecordName());
 m_QueryHeader.AddField(q_PO.GetFld("ID"));
 m_QueryHeader.AddField(q_PO.GetRegNoFld());
 m_QueryHeader.AddField(q_PO.GetDateFld());
 m_QueryHeader.AddField(q_PO.GetTimeFld());
 
-' Поле "@" — ссылка на строку в БД
+'Поле "@" — ссылка на строку в БД'
 ```
 
 ### Перенаправление dsDB на запрос
 
 ```EME-L
-' Указываем объекту dsDB работать с запросом
+'Указываем объекту dsDB работать с запросом'
 q_PO = Object("dsDB", "PurchaseOrder");
 q_PO.SetQuery(m_QueryHeader);
 
-' Теперь этот код добавит строку в запрос, а не в БД
+'Теперь этот код добавит строку в запрос, а не в БД'
 q_PO.AppendAndSetLine();
 q_PO.Put("ID", GetHeaderData("id"));
 q_PO.PutOrderNo(GetHeaderData("po_reg_no"));
@@ -630,7 +630,7 @@ q_PO.PutTime(is_dos_date);
 Для быстрой записи подготовленных данных в БД используется связывание полей запроса с полями записи:
 
 ```EME-L
-' Связываем поля запроса с полями записи
+'Связываем поля запроса с полями записи'
 r_PO = Object("dsDB", "PurchaseOrder");
 
 m_QueryHeader.ConnectFields(r_PO.GetFld("ID"));
@@ -638,14 +638,14 @@ m_QueryHeader.ConnectFields(r_PO.GetRegNoFld());
 m_QueryHeader.ConnectFields(r_PO.GetFld("Date"));
 m_QueryHeader.ConnectFields(r_PO.GetTimeFld());
 
-' Блочная запись
+'Блочная запись'
 m_QueryHeader.Sort("@");
 Loop (m_QueryHeader)
     r_PO.SetLine(m_QueryHeader.Get("@"));
     m_QueryHeader.PutConnectData(m_QueryHeader.GetLine());
 End Loop
 
-' Обязательно! DisconnectFields сбрасывает остатки буферов в БД
+'Обязательно! DisconnectFields сбрасывает остатки буферов в БД'
 m_QueryHeader.DisconnectFields();
 ```
 
