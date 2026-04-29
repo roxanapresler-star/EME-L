@@ -1,93 +1,257 @@
-# EME-L (EME Language) — язык программирования для EME.WMS
+# EME-L — язык программирования для EME.WMS
 
-> Проприетарный язык для разработки бизнес-логики в складской системе EME.WMS. Синтаксис в стиле Pascal с блочными конструкциями. Код хранится в EME-L классах и выполняется интерпретатором, встроенным в ядро системы.
+> Проприетарный язык для разработки бизнес-логики в складской системе EME.WMS. Синтаксис в стиле Pascal с блочными конструкциями (If...End If, For...End For, Loop...End Loop). Код хранится в EME-L классах внутри БД, выполняется встроенным интерпретатором. Поддерживает многопоточность (apartment model), управление памятью через подсчёт ссылок + сборку мусора. Каждый объект выполняется в собственной песочнице (sandbox) виртуальной машины EME-L.
 
 ## Правила (обязательно для AI)
 
 - Использовать `SetChainMode` вместо `SetSkipMode` для перебора строк документа
-- Использовать `Const` для константных объектов в циклах
-- Транзакция: `is_transaction(1)` перед изменением данных, `is_transaction(-1)` после
-- `ByRef`/`ByVal` для возврата нескольких значений из функции
-- `SetSkipMode` нельзя использовать внутри цикла — режим устанавливается один раз перед циклом
-- В EME-SQL использовать `WITH` вместо `WHERE` для загрузки данных
+- Использовать `Const()` для константных объектов — вычисляется один раз за время жизни программы
+- Транзакция: `is_transaction(1, "Имя")` перед изменением данных, `is_transaction(-1)` после, `is_transaction(0)` для отката
+- `ByRef` для возврата нескольких значений из функции, `RefOf` для передачи, `ValOf` для чтения
+- `SetSkipMode` устанавливается один раз перед циклом — нельзя внутри цикла
+- В EME-SQL использовать `WITH` вместо `WHERE` для фильтрации данных
 - Только подтверждённые примеры из документации — не выдумывать код
-- Перед каждым методом: `' #KPI Инициалы Дата` и описание задачи
-- Исправления: `' #NPM Дата По заявке №: причина` над блоком кода
-- `As "Invariant"` предпочтительнее `As "Dynamic"` для IClass
+- `As "Invariant"` предпочтительнее `As "Dynamic"` для IClass (поиск при первом вызове, быстрее)
+- `FindMethod`/`CallMethod` запрещены — использовать статическую линковку
+- Не создавать объекты `Object("ClassName")` внутри циклов и в параметрах методов — утечка памяти
+- Префикс `m_` обязателен для полей класса, запрещён для локальных переменных
+- Инициализация Object-полей только в конструкторе
+- Не ловить исключения в коде, который пишет в БД
 
 ---
 
-## Обзор файловой структуры
+## Обзор файловой структуры (44 файла)
 
-| Файл | Содержание |
-|------|-----------|
-| [EMEL_Language_Basics.md](docs/EMEL_Language_Basics.md) | Синтаксис, переменные, транзакции, режимы обхода, статическая линковка, ByRef, оптимизация памяти, правила оформления кода |
-| [EMEL_Working_with_Records.md](docs/EMEL_Working_with_Records.md) | Создание/удаление строк, Put/Get, реляционный путь, MustBe*, BitBuffer, SetFindMode, удалённые строки |
-| [EMEL_SQL_Queries.md](docs/EMEL_SQL_Queries.md) | EME-SQL, WITH, Const, is_query/is_edit_data, ExternalDB, PostgreSQL, dsQUERY |
-| [EMEL_Dialogs_Reports.md](docs/EMEL_Dialogs_Reports.md) | Dialog_OnLoad/OnCheck, OnCheck для органов, UI дизайн, отчёты, ReportRunner, будильник, 3D (Irrlicht) |
-| [EMEL_Classes_Utility.md](docs/EMEL_Classes_Utility.md) | Query, Map, Array, BitBuffer, String, PropertyTree, MultiArray, dsQUERY, блочная запись |
-| [EMEL_EventHandlers.md](docs/EMEL_EventHandlers.md) | Все обработчики событий (OnLoad, OnCheck, OnSkip, OnMoveTableLines и др.) |
-| [EMEL_Constants_isFunctions.md](docs/EMEL_Constants_isFunctions.md) | Константы, is-функции (Bit, Browser, Context), DBWatch, заливка проекта, мультипротоколы |
-| [EMEL_Practice_Tasks.md](docs/EMEL_Practice_Tasks.md) | Практические задачи: оптимизация, отладка, разбор кода |
-| [EME_WMS_Architecture.md](docs/EME_WMS_Architecture.md) | Архитектура WMS: сервер, рабстанция, ТСД, мозговой компьютер, Монитор Заданий |
-| [EME_WMS_Administration.md](docs/EME_WMS_Administration.md) | Администрирование: настройка, экспорт, заливка, тестирование |
-| [EME_WMS_Priorities_Algorithms.md](docs/EME_WMS_Priorities_Algorithms.md) | Приоритеты и алгоритмы WMS: подборка, размещение, пополнение |
+### Язык EME-L — Основы
+
+- [EME_L_Syntax.md](docs/EME_L_Syntax.md): Переменные, 9 типов данных, операторы, управляющие конструкции (If, For, While, Loop, Switch, Try, Select, Procedure), встроенные константы, приоритет операций, неявное приведение типов
+- [EME_L_Classes.md](docs/EME_L_Classes.md): Объектная модель — Object(), IClass, песочница, apartment threading, интерфейсы CEME (FindMethod, CallMethod, EnumProperties), статическая линковка
+- [EME_L_Events.md](docs/EME_L_Events.md): Все обработчики событий — 24 диалоговых, 16 органов, 7 таблиц, 11 браузеров, 20 интегратора, 3 отчёта, 5 элементов отчёта, 2 бэнда
+- [EME_L_Constants.md](docs/EME_L_Constants.md): 13 групп констант — типы документов (DOCUMENT_TYPE_*), статусы заказов (os*), типы приказов (MO_TYPE_*), зоны склада (ZONE_*), типы ячеек (CELL_TYPE_*), типы доставки, JSON-узлы
+- [EME_L_IS_Functions.md](docs/EME_L_IS_Functions.md): is-функции групп Bit, Browser, Context — битовые операции, работа с браузером, контекст диалогов
+
+### Язык EME-L — Данные и память
+
+- [EME_L_Database.md](docs/EME_L_Database.md): Классы Query (LoadAllLines/UnloadAllLines, агрегирование), BitBuffer (LoadLines), Array (Add/GetAt), MultiArray, Map (SetSize 1.3×, Lookup, SetAt)
+- [EME_L_Database_Advanced.md](docs/EME_L_Database_Advanced.md): DBWatch (дозор БД), расширенная фильтрация SetSkipMode (MustBeEQ/GE/LE, MustBeRefEQ, MustBeRefInBitBuffer, MustBeBitSet, MustBeValid), паттерны транзакций, работа с большими данными
+- [EME_L_Memory.md](docs/EME_L_Memory.md): Правила памяти — Const, утечки в SQL, чеклист производительности, диагностика (CATASTRF.log, REPORTS.log), типичные проблемы и решения
+- [EME_L_Records_and_Fields.md](docs/EME_L_Records_and_Fields.md): Записи и поля ЕМЕ БД, put_data/get_data, браузеры, цепочки (один-ко-многим), режимы обхода CEMERec, реляционный путь, создание EME-L класса, диалоги
+- [EME_SQL_Advanced.md](docs/EME_SQL_Advanced.md): Полный EME-SQL — SELECT, WHERE, WITH, WITH(Rec), HAVING, GROUP BY, ORDER BY, LEFT JOIN, UNION, TOTAL, NEW{}, CHAIN JOIN, вычисляемые поля, реляционное чтение
+
+### Язык EME-L — Продвинутые
+
+- [EME_L_Advanced_Features.md](docs/EME_L_Advanced_Features.md): Компоненты (Selections), внешние устройства (сканер), календарь дат, статическая линковка, ByRef/ByVal/RefOf/ValOf, tr() локализация, серверные vs GUI классы
+- [EME_L_Advanced_API_and_Patterns.md](docs/EME_L_Advanced_API_and_Patterns.md): String (40+ методов), PropertyTree/JSON (Put, Get, AddChild, PushBack, GetJSON), класс Parameters, создание ботов (7 шагов), BotRec API
+- [EME_L_HTTP_Integration.md](docs/EME_L_HTTP_Integration.md): HTTP-архитектура, TSD-коммуникация, пакетная обработка (Batch), CEMEHttp, CHttpData, SendWebRequest
+- [EME_L_Query_Reports.md](docs/EME_L_Query_Reports.md): Отчёты и печатные формы — визуальный редактор, бэнды (горизонтальный, вертикальный, скрытый, динамический), BindBand/BindCell, редактируемые отчёты на диалоге
+- [EME_L_Misc_and_Localization.md](docs/EME_L_Misc_and_Localization.md): UI-тестирование (is_ui_test_mode), робот-тестеры, локализация, ENG.txt, LocalizationUtilities
+
+### Бизнес и архитектура
+
+- [EME_WMS_Theory_and_Architecture.md](docs/EME_WMS_Theory_and_Architecture.md): Архитектура WMS — DB, Application Server, Workstation, HTTP Server; метапроект (MetC-SyS, MetC-WMS); eme.config; транзакции; выравнивание
+- [Business_Analytics.md](docs/Business_Analytics.md): Структура документации (5 томов), история платформы (1991–2026), состав базовой версии, AI-сервер, 3PL портал, Superset
+
+### Развёртывание и сопровождение
+
+- [Release_Deployment.md](docs/Release_Deployment.md): Развёртывание релизов
+- [Test_Environment_and_TSD_Setup.md](docs/Test_Environment_and_TSD_Setup.md): Тестовый стенд и настройка ТСД
+- [Installer_Creation.md](docs/Installer_Creation.md): Создание инсталлятора
+- [Updates_Methodology.md](docs/Updates_Methodology.md): Методология обновлений
+- [System_Archiving_and_Priorities.md](docs/System_Archiving_and_Priorities.md): Архивация БД (pruning), системные приоритеты, алгоритмы пополнения (PPU, фильтры, оптимизация)
+
+### Администрирование
+
+- [Server_and_Services_Setup.md](docs/Server_and_Services_Setup.md): Создание сервера (service.exe — 3 службы), ServerJob (SendJob/GetJobReturnValue), Монитор Заданий (JSON, шаблоны процессов, боты, будильник TM01)
+- [Performance_and_Logging.md](docs/Performance_and_Logging.md): Логирование (CATASTRF.log, REPORTS.log, 7 типичных проблем), профилирование стеков потоков HTTP
+
+### Интеграция
+
+- [ERP_1C_Integration.md](docs/ERP_1C_Integration.md): Интеграция с 1С через промежуточную SQL-БД, ERPUtilities, обработчики событий, 1C-расширение
+- [Web_Services_and_API.md](docs/Web_Services_and_API.md): JSON API (htmJSON, PropertyTree), SOAP, пример загрузки контрагентов
+- [PostgreSQL_ODBC_Integration.md](docs/PostgreSQL_ODBC_Integration.md): ExternalDB — Connect/CreateTable/InsertLines для PostgreSQL через ODBC
+
+### Сборка и DevOps
+
+- [Build_Metaproject.md](docs/Build_Metaproject.md): Сборка метапроекта
+- [Build_Android_TSD.md](docs/Build_Android_TSD.md): Сборка Android ТСД
+- [Hash_DB_and_3PL.md](docs/Hash_DB_and_3PL.md): Hash DB и 3PL портал
+- [Database_Replication.md](docs/Database_Replication.md): Репликация БД
+
+### GUI
+
+- [GUI_DB_Structure.md](docs/GUI_DB_Structure.md): Структура БД — флаги записей (13), флаги полей (14), атрибуты, экспорт/импорт .dbh, цепочки
+- [GUI_Dialog_Editor.md](docs/GUI_Dialog_Editor.md): Редактор диалогов — свойства, флаги интерфейса (20+), таблицы (16 флагов), привязка колонок, реляционный путь
+- [GUI_Project_Deployment.md](docs/GUI_Project_Deployment.md): Заливка проекта — экспорт базы, сравнение (TortoiseMerge), сетевое слияние, откаты, патчи
+- [GUI_Data_Slices_and_Lessons.md](docs/GUI_Data_Slices_and_Lessons.md): Срезы данных и уроки — калиброванные снимки БД, раздвоитель ключей, регистрация на центральном сервере
+- [GUI_Activist_and_Configurator.md](docs/GUI_Activist_and_Configurator.md): Конфигуратор (дерево модулей) и Активист (мониторинг склада, наследование ActivistTasks)
+
+### ТСД и складские операции
+
+- [TSD_Operations_and_Settings.md](docs/TSD_Operations_and_Settings.md): Операции ТСД — HTTP-обмен, GetListOrdersKeys, Batch-обработка, Document_OnBatchRespond
+- [TSD_WDC_Measurement.md](docs/TSD_WDC_Measurement.md): Измерение WDC
+- [TSD_WDC_Cell_Routing.md](docs/TSD_WDC_Cell_Routing.md): Маршрутизация ячеек WDC
+- [AI_Programming_Assistant.md](docs/AI_Programming_Assistant.md): AI-ассистент программиста — LibreChat + Qwen2.5-14B, RAG на ~3200 методов, Android Studio ProxyAI + Qwen3-coder
+
+### Платформа и спецмодули
+
+- [EME_L_Examples.md](docs/EME_L_Examples.md): Обязательные правила оформления кода — 12 требований к комментариям (#KPI, #NPM), префиксы переменных (r_, d_, m_, arr_), форматирование
+- [EME_WMS_Linux.md](docs/EME_WMS_Linux.md): Linux — нет GUI-рабочей станции, Server Console, Resource Editor
+- [GUI_Fingerprint_Registration.md](docs/GUI_Fingerprint_Registration.md): Регистрация отпечатков пальцев
+- [Working_Time_Control.md](docs/Working_Time_Control.md): Модуль учёта рабочего времени
+
+---
+
+## Типы данных EME-L
+
+| Тип | COleVariant | Литерал | Пример |
+|-----|-------------|---------|--------|
+| Empty | VT_EMPTY | `EMPTY` | `Variable;` |
+| Integer | VT_I4 | Десятичный / `0x` hex | `Variable = 10;` |
+| Real | VT_R8 | `{int}.{frac}` | `Variable = 10.1;` |
+| String | VT_BSTR | `"..."` | `Variable = "10";` |
+| Boolean | VT_BOOL | `TRUE` (-1) / `FALSE` (0) | `Variable = TRUE;` |
+| DateTime | VT_DATE | Нет литералов | `is_date(д, м, г)` |
+| Array | VT_ARRAY\|VT_UI1 | `is_array(255, 1, 127)` | Флаги, байтовые массивы |
+| Dispatch | VT_DISPATCH | COM-объект | Объекты C++ |
+| Object | VT_NULL | `Object("Class")` | EME-L объекты |
+
+### Встроенные константы
+
+| Константа | Значение | Описание |
+|-----------|----------|----------|
+| `TRUE` | -1 | Истина |
+| `FALSE` | 0 | Ложь |
+| `EMPTY` | — | Пустое значение |
+| `NULL_REF` | -1 | Нулевая ссылка |
+| `NEW_LINE_MARK` | 2000000000 | Признак новой строки |
+| `NULL_RECORD` | -100 | Нулевая запись |
+| `NULL_FIELD` | -100 | Нулевое поле |
 
 ---
 
 ## Создание объектов Object()
 
-| Класс | Назначение |
-|-------|-----------|
-| `Object("dsDB", "Запись")` | Запись базы данных |
-| `Object("Dialog")` | Диалог |
-| `Object("Control",,"Имя")` | Орган управления диалога |
-| `Object("Query")` | Табличные данные в памяти |
-| `Object("Map", размер)` | Хэш-таблица (размер ≈ 1.3× кол-ва элементов) |
-| `Object("Array")` | Динамический массив |
-| `Object("BitBuffer", размер)` | Битовый буфер для фильтрации |
-| `Object("String", "значение")` | Работа со строками |
-| `Object("PropertyTree")` | JSON-дерево |
-| `Object("dsQUERY")` | Запрос в памяти для блочной записи |
-| `Object("DBWatch")` | Дозор базы данных |
+| Класс | Назначение | Пример |
+|-------|-----------|--------|
+| `Object("dsDB", "Запись")` | Запись базы данных (CEMERec) | `r_Doc = Object("dsDB", "Документы");` |
+| `Object("Dialog")` | Текущий диалог | `Object("Dialog").SetLine(ref);` |
+| `Object("Control", , "Имя")` | Орган управления диалога | `ctrlEdit = Object("Control", , "Edit");` |
+| `Object("Query")` | Табличные данные в памяти | `q = Object("Query"); q.Create();` |
+| `Object("Map", размер)` | Хэш-таблица (размер ≈ 1.3× элементов) | `map = Object("Map"); map.SetSize(1000);` |
+| `Object("Array")` | Динамический массив | `arr = Object("Array"); arr.Add(val);` |
+| `Object("MultiArray")` | Двумерный массив с именованными колонками | |
+| `Object("BitBuffer", размер)` | Битовый буфер для фильтрации | `bb = Object("BitBuffer", is_No_of_lines("Doc"));` |
+| `Object("String", "значение")` | Работа со строками (40+ методов) | `s = Object("String", "text");` |
+| `Object("PropertyTree")` | JSON-дерево | `json = Object("PropertyTree"); json.Put("k","v");` |
+| `Object("dsQUERY")` | Запрос для блочной записи | |
+| `Object("DBWatch")` | Дозор базы данных | `m_DBWatch = Object("DBWatch");` |
+| `Object("IClass", "Имя", "Класс", Flag)` | Доступ к другому EME-L классу | Flag=TRUE (окно) / FALSE (глобальный) |
+| `Object("ExternalDB")` | Внешняя БД (PostgreSQL через ODBC) | |
+| `Object("Parameters")` | Параметры (строка ключ=значение) | `p = Object("Parameters"); p.PutParam("k",v);` |
+| `Object("System")` | Системные методы (InitQueryCache/ClearQueryCache) | |
+
+### IClass — доступ к другому EME-L классу
+
+```EME-L
+obj = Object("IClass", "CompleteInventOperations", "CompleteInventOperations");
+obj.OnInit(m_Doc, m_bGetListOrdersKeys, m_TerminalRef);
+```
+
+Конструктор: `IClass(ИмяОбъекта, КлассИЛИСсылка, ПризнакОкна)`
+- ПризнакОкна = `TRUE` (по умолчанию) — окно обязано существовать
+- ПризнакОкна = `FALSE` — глобальный объект, apartment id = NULL
+- Использовать `As "Invariant"` вместо `As "Dynamic"` (поиск один раз, быстрее)
 
 ---
 
-## Режимы обхода записей
+## Режимы обхода записей CEMERec
 
-| Режим | Скорость | В цикле | Применение |
-|-------|----------|---------|-------------|
-| SetRealMode | Медленно | Да | Полный перебор без условий |
-| SetSkipMode | Средне | Нет | Поиск с условиями MustBe* |
-| SetSkipMode("Индекс") | Быстро | Да | Поиск по индексированному полю |
-| SetChainMode | Очень быстро | Да | Перебор строк одного документа |
-| SetFindMode | Быстро | Нет | Поиск ≥10 значений без индекса |
+| Режим | Метод | Скорость | В цикле | Применение |
+|-------|-------|----------|---------|-------------|
+| Физический | `SetRealMode()` | Медленно | Да | Полный перебор без условий |
+| Фильтрация | `SetSkipMode()` | Средне | Нет | Поиск с условиями MustBe* |
+| Индексный | `SetSkipMode("Поле")` | Быстро | Да | Поиск по индексированному полю |
+| Цепочечный | `SetChainMode()` | Очень быстро | Да | Перебор строк одного документа по @-ссылкам |
+| Хэш-поиск | `SetFindMode()` | Быстро | Нет | Поиск ≥10 значений без индекса |
 
----
+**Любой вызов режима отменяет все предыдущие установки режимов.**
 
-## Ключевые методы dsDB
+### Условия фильтрации для SetSkipMode
 
 | Метод | Описание |
 |-------|----------|
-| `CreateNewLine()` / `ApplyNewLine()` | Создание и сохранение новой строки |
-| `DeleteLine()` | Удаление строки |
-| `SetLine(ref)` | Установка на строку по ссылке |
+| `MustBeEQ(value)` | Равно |
+| `MustBeGE(value)` | Больше или равно |
+| `MustBeLE(value)` | Меньше или равно |
+| `MustBeRefEQ(value)` | Ссылка равна |
+| `MustBeRefInBitBuffer(bb)` | Ссылка в битовом буфере |
+| `MustBeBitSet(bit)` | Бит установлен в поле |
+| `MustBeValid()` | Строка не удалена |
+
+---
+
+## Ключевые методы dsDB (CEMERec)
+
+### Создание и удаление строк
+
+| Метод | Описание |
+|-------|----------|
+| `CreateNewLine()` | Создать новую строку |
+| `ApplyNewLine()` | Сохранить новую строку в БД |
+| `DeleteLine()` | Удалить строку |
+
+### Навигация по строкам
+
+| Метод | Описание |
+|-------|----------|
+| `SetLine(ref)` | Установить на строку по ссылке |
 | `SetFirstLine()` / `SetNextLine()` / `IsValidLine()` | Навигация по строкам |
 | `GetLine()` | Получить ссылку на текущую строку |
-| `PutXxxFld(value)` / `GetXxxFld()` | Запись/чтение типизированных полей |
-| `MustBeEQ()` / `MustBeRefEQ()` / `MustBeValid()` | Условия фильтрации (SetSkipMode) |
-| `MustBeIndexEQ(val1, val2, ...)` | Фильтрация по составному индексу |
-| `MustBeRefInBitBuffer(bb)` | Фильтрация по битовому буферу |
-| `GetРеляционныйПуть()` | Чтение связанных данных (GetGates().GetCode()) |
+| `GetNoOfLines()` | Количество строк в записи |
+
+### Чтение и запись полей
+
+| Метод | Описание |
+|-------|----------|
+| `PutXxxFld(value)` / `GetXxxFld()` | Типизированные поля (IntegerFld, RealFld, StringFld, DateFld, TimeFld, RefFld) |
+| `GetРеляционныйПуть()` | Чтение связанных данных: `r_Doc.GetGates().GetCode()` |
 | `SetQuery(query)` | Перенаправление dsDB на запрос в памяти |
+
+### Загрузка в Query
+
+| Метод | Описание |
+|-------|----------|
+| `LoadAllLines()` / `UnloadAllLines()` | Все строки записи |
+| `LoadLine(ref)` / `UnloadLine(ref)` | Одна строка |
+| `LoadLines(bb\|arr)` / `UnloadLines()` | Множество строк (по BitBuffer или Array) |
 
 ---
 
 ## Контроль транзакций
 
-```eme-l
+```EME-L
 is_transaction(1, "Имя операции");
 ' ... создание/изменение строк ...
+is_transaction(-1);  ' закрыть
+' или
+is_transaction(0);   ' откатить и закрыть
+```
+
+### DBWatch — дозор базы данных
+
+Отслеживает изменения между подготовкой и транзакцией:
+
+```EME-L
+m_DBWatch = Object("DBWatch");
+m_DBWatch.WatchFieldLine(field);
+is_db_watch(1);          ' начать наблюдение (до чтения)
+' ... подготовка ...
+is_transaction(1, "операция");
+is_db_watch(-1);         ' остановить наблюдение
+If (m_DBWatch.Check() != "")
+    OnPrepare();          ' данные изменились — повторить
+End If
+' ... изменения ...
 is_transaction(-1);
 ```
 
@@ -104,15 +268,21 @@ is_transaction(-1);
 | `Find(Кол, Знач)` | Поиск значения в столбце |
 | `Sort(Кол, Убыв)` | Сортировка по столбцу |
 | `GetNoOfLines()` | Количество строк |
+| `LoadAllLines()` / `UnloadAllLines()` | Загрузить/выгрузить все строки записи |
+| `LoadLine(ref)` / `UnloadLine(ref)` | Загрузить/выгрузить одну строку |
+| `LoadLines(bb\|arr)` / `UnloadLines()` | Загрузить/выгрузить множество строк |
+
+Строки удалять нельзя — использовать поле-признак для игнорирования. Есть методы агрегирования, группировки и сравнения запросов.
 
 ---
 
 ## Класс Map
 
-Рекомендуемый размер: 1.3 × ожидаемое количество элементов. Не создавать объекты в параметре `Lookup()` — это вызывает утечку памяти.
+Рекомендуемый размер: 1.3 × ожидаемое количество элементов. Не создавать объекты в параметре `Lookup()` — утечка памяти.
 
 | Метод | Описание |
 |-------|----------|
+| `SetSize(размер)` | Установить размер хэш-таблицы |
 | `Put(Key, Value)` / `Get(Key)` | Запись/чтение по ключу |
 | `SetAt(Key, Value)` | Обновить или добавить |
 | `Lookup(Key)` | Найти по ключу (возвращает объект или INVALID) |
@@ -121,16 +291,70 @@ is_transaction(-1);
 
 ---
 
+## Класс Array
+
+| Метод | Описание |
+|-------|----------|
+| `Add(значение)` | Добавить элемент |
+| `GetAt(индекс)` / `SetAt(индекс, значение)` | Доступ по индексу |
+| `GetSize()` | Количество элементов |
+| `RemoveAll()` | Очистить массив |
+
+---
+
+## Класс BitBuffer
+
+```EME-L
+bb = Object("BitBuffer", is_No_of_lines("Запись"));
+bb.LoadLines(r_Record);
+```
+
+Не увеличивать размер буфера в процессе заполнения (перевыделение памяти). Используется с `MustBeRefInBitBuffer(bb)` при фильтрации.
+
+---
+
+## Класс String (40+ методов)
+
+### Базовые
+`Add(str)`, `Compare(str)`, `CompareNoCase(str)`, `GetLength()`, `IsEmpty()`, `IsNumericOnly()`, `GetContent()`, `SetString(str)`
+
+### Преобразования
+`AnsiToUTF8()`, `AnsiToOem()`, `AsDateTime()`, `AsInteger()`, `AsReal()`, `AsString()`
+
+### Редактирование
+`Format(fmt, args...)`, `MakeUpper()`, `MakeLower()`, `MakeCapitalLetter()`, `Replace(old, new)`, `Split(sep, array)`, `TrimLeft()`, `TrimRight()`, `RemoveSymbol(chars)`
+
+### Поиск и извлечение
+`Find(substr, start?)`, `FindNoCase(str)`, `FindOneOf(chars)`, `ReverseFind(char)`, `Left(n)`, `Right(n)`, `Mid(start, count?)`, `ExtractUpto(char)`, `ExtractUptoString(str)`, `GetAt(index)`
+
+---
+
 ## Класс PropertyTree (JSON)
 
 | Метод | Описание |
 |-------|----------|
 | `Put(Name, Value)` | Добавить простое поле |
+| `Get(Name)` | Получить значение поля |
 | `AddChild(Name)` | Создать дочерний узел, возвращает ссылку |
 | `PushBack()` | Добавить пустой узел в массив |
-| `Get(Name)` | Получить значение поля |
-| `GetJSON()` | Получить JSON-строку (по умолчанию UTF-8) |
+| `GetJSON()` | Получить JSON-строку (UTF-8) |
 | `PutJSON(string)` | Парсинг JSON-строки |
+| `AddQuery(Name, Query)` | Добавить данные из запроса |
+| `PutArray(Name, Array)` | Добавить массив |
+| `PutMap(Name, Map)` | Добавить Map |
+| `GetArray()` / `GetMap()` / `GetQuery(Query)` | Извлечь коллекции |
+| `Delete(Name?)` | Удалить поле/узел |
+| `SetConst()` / `IsConst()` | Пометить как неизменяемый |
+| `SetFirstLine()` / `SetNextLine()` / `IsValidLine()` | Итерация по массиву |
+
+```EME-L
+json = Object("PropertyTree");
+json.Put("about", "JSON!");
+arr = json.AddChild("Items");
+elem = arr.PushBack();
+elem.Put("id", 1);
+str = json.GetJSON();
+```
 
 ---
 
@@ -142,11 +366,12 @@ is_transaction(-1);
 |---------|----------|
 | `is_date(д, м, г)` | Создание даты |
 | `is_time(ч, м, с)` | Создание времени |
-| `is_transaction(1,"Имя")` / `(-1)` | Транзакция |
-| `is_message(заголовок, текст, кнопки, иконка)` | Сообщение |
+| `is_transaction(1,"Имя")` / `(-1)` / `(0)` | Транзакция (открыть/закрыть/откатить) |
+| `is_abort_transaction()` | Пометить текущую транзакцию как ошибочную |
+| `is_message(заголовок, текст, кнопки, иконка)` | Сообщение пользователю |
 | `is_format(формат, ...)` | Форматирование строки |
-| `is_trim_all(строка)` | Удаление пробелов |
-| `is_query(запрос, поле)` | Значение из запроса |
+| `is_trim_all(строка)` | Удаление всех пробелов |
+| `is_query("Запись", "Путь")` | Значение из запроса (реляционный путь) |
 | `is_edit_data("Орган")` | Значение из органа диалога |
 | `is_line()` | Номер текущей строки |
 | `is_workstation_mode()` | Режим станции |
@@ -154,54 +379,297 @@ is_transaction(-1);
 | `is_dlg_line()` | Ссылка на текущую строку диалога |
 | `is_No_of_lines("Запись")` | Количество строк в записи |
 | `is_type(значение, тип)` | Преобразование типа |
+| `is_open_transaction()` | Проверка: открыта ли транзакция |
+| `is_db_watch(1)` / `(-1)` | Начать/остановить дозор БД |
+| `is_ui_test_mode()` | Режим UI-тестирования (не блокировать диалоги) |
+| `is_do_wait_cursor(1/-1)` | Курсор-часовка |
+| `is_try_find_record(Имя)` | Найти номер записи по имени |
 
 ### Группа Bit
 
 | Функция | Описание |
 |---------|----------|
-| `is_bit(Field, BitNo)` | Проверка бита |
-| `is_set_bit` / `is_clear_bit` / `is_reverse_bit` | Установка/снятие/инверсия бита |
-| `is_and` / `is_or` / `is_xor` / `is_not` | Побитовые операции |
-| `is_mask(...)` | Формирование маски |
-| `is_shift_left` / `is_shift_right` | Сдвиги |
+| `is_bit(Field, BitNo)` | Проверка бита (→ bool) |
+| `is_set_bit(Field, BitNo)` | Установить бит (→ int) |
+| `is_clear_bit(Field, BitNo)` | Снять бит (→ int) |
+| `is_reverse_bit(Field, BitNo)` | Инвертировать бит (→ int) |
+| `is_and(val, val, ...)` | Побитовое И |
+| `is_or(val, val, ...)` | Побитовое ИЛИ |
+| `is_xor(val, val, ...)` | Побитовое XOR |
+| `is_not(val)` | Побитовое НЕ |
+| `is_mask(bit, bit, ...)` | Формирование маски |
+| `is_shift_left(Field, Shift)` | Сдвиг влево |
+| `is_shift_right(Field, Shift)` | Сдвиг вправо |
 
 ### Группа Browser
 
 | Функция | Описание |
 |---------|----------|
 | `is_hewed(Var, Line, Obj)` | Проверка выделения строки в браузере |
+| `is_hew_item(Var, Line, Obj)` | Проверка выделения (синоним) |
+| `is_empty_hew(Var, Obj)` | Нет выделенных строк |
 | `is_browse(Browser, ...)` | Номер выбранной строки |
-| `is_browse_data(Column, Line)` | Содержимое колонки |
-| `is_keydown_flag()` | Нажатие клавиши |
+| `is_browse_data("Колонка", Line)` | Содержимое колонки |
+| `is_browser_base_record(Line)` | Базовая запись браузера |
+| `is_run_browse(RecordNo)` | Открыть браузер, вернуть выбор |
+| `is_keydown_flag()` | Флаг нажатия клавиши |
 
 ### Группа Context
 
 | Функция | Описание |
 |---------|----------|
-| `is_put_context(Name, Param)` | Установить контекст |
-| `is_get_context_as_string(Name)` | Получить как строку |
-| `is_get_context_as_ref(Name)` | Получить как число |
-| `is_check_context(Type, Name)` | Проверить контекст |
+| `is_put_context("Name", Value)` | Установить контекст |
+| `is_get_context_as_string("Name")` | Получить как строку |
+| `is_get_context_as_ref("Name")` | Получить как число |
+| `is_del_context("Name")` | Удалить контекст |
+| `is_check_context("Type")` или `("Type", "Name")` | Проверить контекст |
+| `is_get_context("Dialog"/"Query"/"Report")` | Имя текущего контекста |
 
 ---
 
-## Статическая линковка и Dynamic/Invariant
+## Константы EME-L
 
-Статическая линковка: `r_Doc As "Document" = Const(Object("dsDB", "Document"))` — компилятор проверяет методы.
+### Типы документов (DOCUMENT_TYPE_*)
 
-Для IClass: `As "Dynamic"` (поиск при каждом вызове, медленнее) или `As "Invariant"` (поиск при первом вызове, предпочтительно). `FindMethod`/`CallMethod` запрещены.
+| Константа | Значение | Описание |
+|-----------|----------|----------|
+| `DOCUMENT_TYPE_INCOMG` | 0 | Приход |
+| `DOCUMENT_TYPE_MOVPAL` | 1 | Перемещение паллеты |
+| `DOCUMENT_TYPE_MOVCEL` | 2 | Перемещение ячейки |
+| `DOCUMENT_TYPE_CHANGE` | 3 | Изменение |
+| `DOCUMENT_TYPE_OFFWRI` | 4 | Списание |
+| `DOCUMENT_TYPE_OUTPPU` | 5 | Отгрузка |
+| `DOCUMENT_TYPE_OUTTRN` | 6 | Исходящий транзит |
+| `DOCUMENT_TYPE_INCTRN` | 7 | Входящий транзит |
+| `DOCUMENT_TYPE_INVOFF` | 8 | Инвентаризация офиса |
+| `DOCUMENT_TYPE_AUTOFF` | 9 | Автоматическая инвентаризация |
+| `DOCUMENT_TYPE_AUTMOV` | 10 | Автоматическое перемещение |
+| `DOCUMENT_TYPE_INVINC` | 11 | Инвентаризация прихода |
+| `DOCUMENT_TYPE_REPACK` | 13 | Переупаковка |
+
+### Статусы заказов (os*)
+
+| Константа | Значение |
+|-----------|----------|
+| `osNew` | 0 |
+| `osCalculated` | 200 |
+| `osAssembled` | 500 |
+| `osHasLeftWarehouse` | 600 |
+| `osFinished` | 1400 |
+
+### Типы приказов (MO_TYPE_*)
+
+| Константа | Значение | Описание |
+|-----------|----------|----------|
+| `MO_TYPE_INCOMING` | 0 | Приход |
+| `MO_TYPE_PPU` | 4 | Подборка |
+| `MO_TYPE_DOCUMENT_INVENTORY` | 7 | Инвентаризация |
+| `MO_TYPE_ORDER_OUTCOME` | 8 | Отгрузка заказа |
+| `MO_TYPE_REPACKING` | 9 | Переупаковка |
+| `MO_TYPE_PACKER_ORDER` | 14 | Приказ упаковки |
+| `MO_TYPE_EXPEDITION` | 19 | Экспедиция |
+| `MO_TYPE_PICK_BY_LINE` | 24 | Покалиннейная подборка |
+
+### Зоны склада (ZONE_*)
+
+| Константа | Значение | Описание |
+|-----------|----------|----------|
+| `ZONE_STORAGE` | 0 | Хранение |
+| `ZONE_ACCEPTION` | 1 | Приёмка |
+| `ZONE_PIKING` | 2 | Подборка |
+| `ZONE_COMPLETE` | 3 | Комплектация |
+| `ZONE_SHIPPING` | 5 | Отгрузка |
+| `ZONE_DEFECT` | 6 | Брак |
+| `ZONE_PIECE_PIKING` | 7 | Штучная подборка |
+
+### Типы ячеек (CELL_TYPE_*)
+
+`DRIVE_IN`=1, `SELECTIVE`=2, `PICKING`=3, `OA`=4, `COLUMN`=5, `NONADDR`=9
+
+### JSON-узлы (JSON_NODE_TYPE_*)
+
+`UNKNOWN`=0, `NULL`=1, `BOOLEAN`=2, `STRING`=3, `INTEGER`=4, `DOUBLE`=5, `ARRAY`=6, `OBJECT`=7
 
 ---
 
-## Константы
+## Обработчики событий
 
-Типы документов: `DOCUMENT_TYPE_INCOMG`=0 (Приход), `DOCUMENT_TYPE_MOVPAL`=1, `DOCUMENT_TYPE_OFFWRI`=4 (Списание), `DOCUMENT_TYPE_OUTPPU`=5 (Отгрузка).
+### Диалоги (24 обработчика)
 
-Статусы заказов: `osNew`=0, `osCalculated`=200, `osAssembled`=500, `osHasLeftWarehouse`=600, `osFinished`=1400.
+| Обработчик | Возвращает True = |
+|------------|-------------------|
+| `Dialog_OnInit()` | Запретить открытие |
+| `Dialog_OnClose()` | Запретить закрытие |
+| `Dialog_OnLoad()` | — |
+| `Dialog_OnNewItem()` | Отменить новую строку |
+| `Dialog_OnAfterNewItem()` | — |
+| `Dialog_OnBeforeUpdate()` / `Dialog_OnAfterUpdate()` | — |
+| `Dialog_OnBeforeSave()` / `Dialog_OnAfterSave()` | — |
+| `Dialog_OnCheck(Transaction)` | Отменить сохранение |
+| `Dialog_OnCheckDelete()` | Отменить удаление |
+| `Dialog_OnCheckReferences()` | Игнорировать ссылки, удалить принудительно |
+| `Dialog_OnDelete()` / `Dialog_OnAfterDelete()` | — |
+| `Dialog_OnChangeTableLine()` / `Dialog_OnChangeTableColumn()` | — |
+| `Dialog_OnDeleteTableLine()` | — |
+| `Dialog_OnReport(ReportName)` | Пропустить стандартную обработку |
+| `Dialog_OnCommandNew()` / `Dialog_OnCommandDelete()` | Отменить |
+| `Dialog_OnTabItemChanged()` | — |
+| `Dialog_OnFillPrintForms(Info As "FILL_PRINT_FORMS")` | — |
+| `Dialog_OnRunPrintForm(Info As "RUN_PRINT_FORM")` | — |
+| `Dialog_OnHyperTextRef(Ref)` | — |
 
-Типы приказов: `MO_TYPE_INCOMING`=0, `MO_TYPE_PPU`=4, `MO_TYPE_DOCUMENT_INVENTORY`=7.
+### Таблицы (7 обработчиков)
 
-Зоны склада: `ZONE_STORAGE`=0, `ZONE_ACCEPTION`=1, `ZONE_PIKING`=2, `ZONE_COMPLETE`=3, `ZONE_SHIPPING`=5.
+| Обработчик | Описание |
+|------------|----------|
+| `Table_OnClick()` | Клик по таблице (True = обработан) |
+| `Table_OnSetNextCell()` | Переход фокуса (True = не переходить) |
+| `Table_OnSkip()` | Пропуск строки (True = пропустить) |
+| `Table_OnCommandDelete()` | Удаление строки (True = отменить) |
+| `Table_OnRClick(Info As "TABLE_RCLICK_ON_CELL_NOTIFY")` | Правый клик |
+| `Table_OnClickColumnHeader(Info)` | Клик по заголовку колонки |
+| `Table_OnMarkTableLine(Info)` | Отметка строки |
+
+### Браузеры (11 обработчиков)
+
+| Обработчик | Описание |
+|------------|----------|
+| `Browser_OnInit()` / `Browser_OnLoad()` / `Browser_OnDestroy()` | Жизненный цикл |
+| `Browser_OnSelect(Selected)` | Выбор строки (True = запретить смену) |
+| `Browser_OnAfterSelect()` | После выбора |
+| `Browser_OnCommand()` | Enter / двойной клик |
+| `Browser_OnSkip(Record)` | Фильтрация (True = пропустить) |
+| `Browser_OnSkipEx` | Полная кастомная загрузка (UnloadAllLines, LoadLine, LoadLines) |
+| `Browser_OnTune()` | Предварительная настройка заполнения |
+| `Browser_OnMarkTreeItem(Info)` | Отметка узла дерева |
+| `Browser_OnStartAddDialog()` | Перед диалогом добавления (True = блокировать) |
+
+### Интегратор (20 обработчиков)
+
+| Обработчик | Возвращает |
+|------------|-----------|
+| `Integrator_OnGetChild{RecName}(Rec)` | Дочерняя запись или NULL |
+| `Integrator_OnGetSibling{RecName}(Rec)` | Соседняя запись или NULL |
+| `Integrator_OnGetParent{RecName}(Rec)` | Родительская запись или NULL |
+| `Integrator_OnGetItemText{RecName}(Rec)` | Текст элемента |
+| `Integrator_OnGetItemIcon{RecName}(Rec)` | "Module#Resource" |
+| `Integrator_OnSelect(Rec)` / `Integrator_OnEdit(Rec)` | Выбор/редактирование |
+| `Integrator_OnCommand(Rec, ID)` | Команда меню |
+| `Integrator_OnDropItem(Target, Source, ...)` | Drag & Drop |
+
+### Отчёты (3 + 5 обработчиков)
+
+| Обработчик | Описание |
+|------------|----------|
+| `Report_OnBeginReport()` | Начало (True = отменить). Использовать InitQueryCache/ClearQueryCache |
+| `Report_OnEndReport()` | Очистка |
+| `Report_OnCloseReport()` | Закрытие окна |
+| Элементы: `OnInit`, `OnPut`, `OnCommand`, `OnInput`, `OnFillGraphWindow` | |
+
+### Бэнды (2 обработчика)
+
+| Обработчик | Описание |
+|------------|----------|
+| `Band_OnNewItem` | `is_create_band_line(line)` для создания строки |
+| `Band_OnSkip` | Фильтрация + визуальная настройка |
+
+---
+
+## EME-SQL
+
+### Основная структура
+
+```EME-L
+Select (Query AsExternal)
+    SELECT [Поле1], [Поле2], {выражение}:ТИП AS [Имя]
+    FROM [Запись]
+    LEFT JOIN [Запись2] ON [условие]
+    WHERE { EME-L код }        ' фильтр на каждую строку
+    WITH  { EME-L код }        ' один раз за запрос (предпочтительно)
+    WITH(Rec) { Rec.SetSkipMode(...); ... }  ' фильтр через объект записи
+    GROUP BY [Поле]
+    HAVING { EME-L код }       ' пост-фильтрация (наименее предпочтительно)
+    ORDER BY [Поле]
+    UNION
+    SELECT ...
+    TOTAL                      ' операции над всем результатом
+End Select
+```
+
+### Ключевые моменты
+
+- Вычисляемые поля: `{выражение}:ТИП` — **без пробелов** между `}` и `:ТИП`
+- `NEW{N}` — N виртуальных строк без доступа к БД
+- Реляционное чтение: `[@RefField].[TargetField]`, многоуровневое: `[@Ref1].[@Ref2].[Field]`
+- `Const()` внутри SQL для однократного вычисления: `dbRegs = Const(Object("dsDB","Registers"));`
+- `is_edit_data("Орган")` — значение из диалога
+- `is_query("Запись", "Путь")` — значение из запроса
+- `is_line()` — текущий номер строки
+
+---
+
+## Класс ExternalDB (PostgreSQL/ODBC)
+
+```EME-L
+ExternalDB = Object("ExternalDB");
+Error = ExternalDB.Connect("ODBC:DSN=PostgreSQL35W;Server=localhost;Database=TEST;Uid=postgres;Pwd=1;");
+Error = ExternalDB.CreateTable("tablename", Query);
+Error = ExternalDB.InsertLines("tablename", Query);
+```
+
+---
+
+## dsQUERY и блочная запись
+
+Для подготовки данных вне транзакции (OnPrepare) и быстрой записи (OnImport). Порядок: Create → AddField → SetQuery → AppendAndSetLine → ConnectFields → Sort → Loop(PutConnectData) → DisconnectFields.
+
+Ограничения: поля переменной длины и признаки не поддерживаются блочной записью. `DisconnectFields()` обязателен.
+
+---
+
+## Создание ботов (7 шагов)
+
+1. Определить тип события (таймер или функциональное)
+2. Создать базовый EME-L класс с процедурой таймера: `Object("dsDB", "QualifierEvents").OnEvent("TD01", NULL_RECORD, NULL_REF);`
+3. Создать наследуемый класс с конструктором и методом RunBot
+4. Создать событие планировщика (DLL: MetC_SyS.dll, Function: rf_run_EMEL)
+5. Зарегистрировать бота в «Классификатор боты процессов»
+6. Создать событие процесса
+7. Создать бот-процесс в «Описание бизнес процессов»
+
+### API бота
+
+```EME-L
+RunBot(BotRec AS "ProcessBotClassifier", ContextParams)
+BotRec.AddHistoryLine(status, message, params, record, ref)
+BotRec.GetStatusNoError()    ' успех
+BotRec.GetStatusError()      ' ошибка
+BotRec.IsNeedAddHistory()    ' нужна ли запись в историю
+```
+
+---
+
+## ServerJob — серверные задания
+
+```EME-L
+ServerJob = Object("IClass", "ServerJobOrdersBatch", "ServerJobOrdersBatch");
+ActiveJobId = ServerJob.SendJob(Param1, Param2, True);
+' Получение результата через событие Dialog_OnEvent:
+Status = Params.GetLongParam("Status");
+strMess = ServerJob.GetJobReturnValue(Id, "strMess");
+```
+
+Параметры: `"TRANSACTION"` (открыть транзакцию), `"REPORT"` (без транзакции).
+
+---
+
+## Монитор Заданий (Task Monitor)
+
+JSON-интерфейс, шаблоны процессов, боты для автоматического создания задач. Будильник TM01 (интервал 1 мин). Обработчик событий процесса в EME-L классе.
+
+Типы задач: Startup (создаётся ботом), Standard (реакция на событие).
+Параметры: Input field, Button, Setting.
+Команды: `TASK_COMMAND_EXECUTE_ID`, `TASK_COMMAND_CONFIRM_ID`.
 
 ---
 
@@ -209,34 +677,133 @@ is_transaction(-1);
 
 Запрещены: `is_edit_data()`, `is_hewed()`, `Object("Dialog")`, `Object("Control")`. Параметры через ReportRunner: `Object().GetDateBegin()`, `Object().GetParameters()`. Вместо `is_edit_data()` — `is_report_param()`. Видимость: `TRUE` с диалога, `FALSE` по будильнику.
 
----
+### Функции отчётов
 
-## dsQUERY и блочная запись
-
-Используется для подготовки данных вне транзакции (OnPrepare) и быстрой записи (OnImport). Порядок: Create → AddField → SetQuery → AppendAndSetLine → ConnectFields → Sort → Loop(PutConnectData) → DisconnectFields.
-
-Ограничения: поля переменной длины и признаки не поддерживаются блочной записью. `DisconnectFields()` обязателен.
-
----
-
-## DBWatch — дозор базы данных
-
-Позволяет отслеживать изменения между подготовкой и транзакцией. Порядок: `is_db_watch(1)` → OnPrepare → `is_transaction(1)` → `is_db_watch(-1)` → проверка `m_DBWatch.Check()` → `is_transaction(-1)`.
+| Функция | Описание |
+|---------|----------|
+| `is_sum("Поле")` | Агрегация |
+| `is_report_line()` | Текущая строка отчёта |
+| `is_cell_data("Имя")` | Значение ячейки |
+| `is_cell_data_ex("Имя", Кол)` | Значение ячейки по колонке |
+| `is_band_column()` | Текущая колонка бэнда |
+| `is_put_cell_data("Имя", Знач)` | Записать в ячейку |
+| `is_create_band_line(Line)` | Создать строку бэнда |
 
 ---
 
-## Правила оформления диалогов
+## Веб-сервисы (JSON API)
 
-Шрифт Arial 10, кнопки Arial 11. Отступ от края 14px, между полями 8px. Высота текстового поля 22px. Простые диалоги ≤524px, сложные ≤750px. Без скроллингов. Зелёная «Применить» RGB(0,164,65), белая «Закрыть». Обязательные поля — с текстом «Введи!».
+HTTP-точка входа: «Классификатор веб-объектов» → JSON → `metc_sys.dll`, `htm_JSON`. Маршрутизатор: `htmJSON.GetTemplate(command, treeRequest, treeAnswer)`. Работа с JSON через `PropertyTree`.
+
+```EME-L
+LoadClient(treeRequest, treeAnswer)
+{
+    is_transaction(1, "Сохранение контрагентов");
+    r_Client = Object("dsDB", "Clients");
+    ListClient = treeRequest.Get("ListClient");
+    For (ListClient.SetFirstLine(); ListClient.IsValidLine(); ListClient.SetNextLine())
+        Client = ListClient.Get();
+        Code = is_trim_all(Client.Get("Code", ""));
+        r_Client.FindAndCreateClientByCode(Code, Name, Address, 1);
+    End For
+    is_transaction(-1);
+    treeAnswer.Put("state", 0);
+}
+```
 
 ---
 
-## Правила комментирования кода EME-L
+## TSD-коммуникация
+
+Запросы ТСД идут в виртуальный каталог `terminals.html`, класс `Terminals`. Поток: `CThreadData::UpdateData()` → `CheckTerminal()` → `CheckOperator()` → `DrawListOrdersEx()` → `OnRequestDone()` → `SaveServerData()`.
+
+Пакетная обработка: `Document_OnBatchRespond(Doc)` или `Document_OnBatchRespond(arrHtmlDocs, arrEMELObjects, ErrArray)`.
+
+---
+
+## Статическая линковка
+
+```EME-L
+r_Doc As "Document" = Const(Object("dsDB", "Document"));
+GetStamps(obj As "CEMERec") { ... }  ' компилятор проверяет типы и методы
+```
+
+90% базовых классов используют статическую линковку (2032 статических vs 222 динамических). `FindMethod`/`CallMethod` запрещены.
+
+Для IClass: `As "Dynamic"` (поиск при каждом вызове, медленнее) или `As "Invariant"` (поиск при первом вызове, предпочтительно).
+
+---
+
+## ByRef / ByVal / RefOf / ValOf
+
+```EME-L
+MyMethod(Ref ByRef)            ' параметр по ссылке
+Result = MyMethod(RefOf Val)   ' передача значения по ссылке
+Check = ValOf Ref > 0          ' чтение значения из ссылки
+Ref ByVal = 5                  ' запись по значению
+```
+
+---
+
+## Локализация (tr)
+
+```EME-L
+is_format(tr("Строка с %s и %d"), val1, val2);  ' правильно
+' НЕПРАВИЛЬНО: tr("text" + var), tr("a") + tr("b")
+```
+
+Файл перевода: `kernel.x64\Exe\Resource\ENG.txt` (UTF16). Тестовый запуск с ключом `/ENG`.
+
+---
+
+## Цепочки (один-ко-многим)
+
+Связи между записями через ссылочные поля (префикс `@`), аналоги отсутствуют индексы и внешние ключи классических СУБД.
+
+- Поле заголовка: `@ДочерняяЗапись` → тип «Ссылка на начало цепочки»
+- Поле дочерней: `@Родитель` → тип «Ссылка на заголовок цепочки»
+- Сортировка-цепочка: первое поле всегда `@Родитель`, далее — сортируемые поля
+- Реляционный путь: `r_Doc.GetGates().GetCode()` — автокэширование
+
+---
+
+## Правила оформления кода EME-L (12 обязательных)
 
 1. Перед каждым методом: `' #KPI Инициалы Дата` и описание задачи
-2. Исправления: `' #NPM Дата По заявке№: причина` над блоком кода
-3. Скопипастенный код: актуализировать комментарии, удалять старые даты/фамилии
-4. Каждый блок кода — с комментарием для чего он нужен
-5. Чтение из БД и запись в БД — в разных блоках/циклах
-6. Код с учётом больших данных, в комментариях — почему выбран способ
-7. Встроенная самодиагностика: проверка промежуточных результатов
+2. Бизнес-описание — что делает метод
+3. Входные/выходные параметры и требования
+4. Описание реализации (термины кода)
+5. Проверка входных данных в начале метода
+6. При копировании кода — актуализировать комментарии
+7. Каждый блок кода — с комментарием
+8. Низкоуровневые блоки → высокоуровневые методы
+9. Чтение из БД и запись в БД — в разных блоках/циклах
+10. Код с учётом больших данных + обоснование в комментариях
+11. Встроенная самодиагностика
+12. Модульные тесты
+
+### Префиксы переменных
+
+| Тип | Префикс |
+|-----|---------|
+| CEMERec (dsDB) | `r_` |
+| CEMEData | `d_` |
+| CEMEFilter | `f_` |
+| CEMEArray | `arr` |
+| CEMEBuffer | `b_` |
+| CEMEMetaShell | `ms` |
+| CDialogVar | `v_` |
+| Поле класса | `m_` (обязательно) |
+
+### Форматирование
+
+- Отступы: 4 пробела (без табов)
+- Операторы с заглавной буквы: `For`, `End For`, `If`, `End If`, `Loop`
+- Максимум 80 символов в строке
+- Один оператор на строку
+- Пробелы вокруг операторов
+
+### Именование
+
+- is-функции: snake_case (`is_get_data`)
+- Методы и классы: CamelCase (`GetData`, `GetDocumentByRegNo`)
