@@ -6,7 +6,7 @@
   "public_key": "pk_ez1lBEo3QvfnWQA9988u7",
   "folders": ["docs"],
   "excludeFolders": [],
-  "excludeFiles": ["CHANGELOG.md", "LICENSE.md", "CODE_OF_CONDUCT.md", "todo.md"],
+  "excludeFiles": ["CHANGELOG.md", "LICENSE.md", "CODE_OF_CONDUCT.md"],
   "rules": [
     "Использовать SetChainMode вместо SetSkipMode для перебора строк документа",
     "Использовать Const() для константных объектов — вычисляется один раз за время жизни программы",
